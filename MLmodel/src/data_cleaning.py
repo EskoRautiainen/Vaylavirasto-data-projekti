@@ -4,36 +4,90 @@ import pandas as pd
 
 
 def step_02_clean_data(dataframe: pd.DataFrame) -> pd.DataFrame:
+    # Check if input is a pandas DataFrame
+    if not isinstance(dataframe, pd.DataFrame):
+        raise TypeError(
+            f"Input must be a pandas DataFrame, got {type(dataframe).__name__}"
+        )
+    
+    # Check for empty dataframe
+    if dataframe.empty:
+        print("Warning: Empty dataframe provided for data cleaning!")
+        return dataframe.copy()
+    
+    # Phase 1: Remove rows with missing values
     rows_with_missing_values = dataframe.index[dataframe.isna().any(axis=1)].tolist()
-    dataframe_without_missing_values = dataframe.drop(index=rows_with_missing_values)
-    numeric_dataframe = dataframe_without_missing_values.apply(pd.to_numeric, errors="coerce")
-    rows_with_non_numeric_values = dataframe_without_missing_values.index[
-        numeric_dataframe.isna().any(axis=1)
+    dataframe_without_missing = dataframe.drop(index=rows_with_missing_values)
+    
+    # Phase 2: Remove rows with non-numeric values
+    # Supports both comma (,) and period (.) as decimal separators
+    def convert_with_comma_and_dot(value):
+        if isinstance(value, str):
+            # If comma found, replace it with period
+            if ',' in value:
+                value = value.replace(',', '.')
+            # Convert to numeric
+            try:
+                return float(value)
+            except ValueError:
+                return None  # Return None if conversion fails
+        return value
+    
+    # Use custom conversion
+    converted_dataframe = dataframe_without_missing.map(convert_with_comma_and_dot)
+    numeric_dataframe = pd.DataFrame(converted_dataframe, columns=dataframe_without_missing.columns)
+    
+    rows_with_non_numeric_values = numeric_dataframe.index[numeric_dataframe.isna().any(axis=1)].tolist()
+    dataframe_with_numeric_only = numeric_dataframe.drop(index=rows_with_non_numeric_values)
+    
+    # Phase 3: Remove rows with negative values
+    rows_with_negative_values = dataframe_with_numeric_only.index[
+        (dataframe_with_numeric_only < 0).any(axis=1)
     ].tolist()
-    dataframe_with_numeric_values_only = numeric_dataframe.drop(index=rows_with_non_numeric_values)
-    rows_with_negative_values = dataframe_with_numeric_values_only.index[
-        (dataframe_with_numeric_values_only < 0).any(axis=1)
-    ].tolist()
-    cleaned_dataframe = dataframe_with_numeric_values_only.drop(
-        index=rows_with_negative_values
-    ).reset_index(drop=True)
+    cleaned_dataframe = dataframe_with_numeric_only.drop(index=rows_with_negative_values).reset_index(drop=True)
+    
+    # Calculate statistics
+    original_rows = len(dataframe)
+    cleaned_rows = len(cleaned_dataframe)
+    
+    # Adjust reporting to match three-phase process
+    missing_mask = dataframe.isna().any(axis=1)
+    non_numeric_mask = numeric_dataframe.isna().any(axis=1) & ~missing_mask.reindex(numeric_dataframe.index, fill_value=False)
+    negative_mask = (dataframe_with_numeric_only < 0).any(axis=1)
+    
+    rows_with_missing_values = dataframe.index[missing_mask].tolist()
+    rows_with_non_numeric_values = dataframe_without_missing.index[non_numeric_mask].tolist()
+    rows_with_negative_values = dataframe_with_numeric_only.index[negative_mask].tolist()
 
     print()
     print("------------------------------------------------------------")
     print("Data cleaning statistics")
     print()
+    
+    # Phase 1: Missing values
     if rows_with_missing_values:
-        print(f"Removed rows with missing values: {rows_with_missing_values}")
+        print(f"Phase 1 - Removed rows with missing values: {rows_with_missing_values}")
     else:
-        print("Removed rows with missing values: none")
+        print("Phase 1 - Removed rows with missing values: none")
+    
+    # Phase 2: Non-numeric values
     if rows_with_non_numeric_values:
-        print(f"Removed rows with non-numeric values: {rows_with_non_numeric_values}")
+        print(f"Phase 2 - Removed rows with non-numeric values: {rows_with_non_numeric_values}")
     else:
-        print("Removed rows with non-numeric values: none")
+        print("Phase 2 - Removed rows with non-numeric values: none")
+    
+    # Phase 3: Negative values
     if rows_with_negative_values:
-        print(f"Removed rows with negative values: {rows_with_negative_values}")
+        print(f"Phase 3 - Removed rows with negative values: {rows_with_negative_values}")
     else:
-        print("Removed rows with negative values: none")
-    print(f"Rows remaining after cleaning: {len(cleaned_dataframe)}")
+        print("Phase 3 - Removed rows with negative values: none")
+    
+    print(f"Rows remaining after cleaning: {cleaned_rows}")
+
+    # Output validation: ensure data remains
+    if cleaned_dataframe.empty:
+        raise ValueError(
+            "Data cleaning removed all rows. No data remains for further processing."
+        )
 
     return cleaned_dataframe
