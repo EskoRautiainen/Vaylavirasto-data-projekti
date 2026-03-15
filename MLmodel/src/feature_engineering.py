@@ -9,7 +9,7 @@ def step_04_engineer_features(dataframe: pd.DataFrame) -> pd.DataFrame:
         raise TypeError(
             f"Input must be a pandas DataFrame, got {type(dataframe).__name__}"
         )
-    
+
     selected_features = [
         "Pysty_kiiht",
         "Sivuheilahdus_kiiht",
@@ -17,7 +17,7 @@ def step_04_engineer_features(dataframe: pd.DataFrame) -> pd.DataFrame:
         "Yhdistetty_kiiht_rms"
 
     ]
-    
+
     # Check if required columns exist in the dataframe
     missing_features = [col for col in selected_features if col not in dataframe.columns]
     if missing_features:
@@ -25,7 +25,7 @@ def step_04_engineer_features(dataframe: pd.DataFrame) -> pd.DataFrame:
             f"Required features are missing: {missing_features}. "
             f"Available columns: {list(dataframe.columns)}"
         )
-    
+
     engineered_dataframe = dataframe.loc[:, selected_features].copy()
 
     print()
@@ -35,7 +35,7 @@ def step_04_engineer_features(dataframe: pd.DataFrame) -> pd.DataFrame:
     print(engineered_dataframe.head(5).to_string())
 
     # Save results to Excel
-    output_path = "MLmodel/output/engineered_features.xlsx"
+    output_path = "output/engineered_features.xlsx"
     engineered_dataframe.to_excel(output_path, index=False)
 
     print()

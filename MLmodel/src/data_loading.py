@@ -24,7 +24,7 @@ def step_01_load_data(file_path: Path) -> pd.DataFrame:
         "Pysty_kiiht",
         "Sivuheilahdus_kiiht",
         "Nyökkimis_kiiht",
-        "Yhdistetty_kiiht_rms",
+        "Yhdistetty_kiiht_rms"
     ]
     filtered_dataframe: pd.DataFrame | None = None
 
