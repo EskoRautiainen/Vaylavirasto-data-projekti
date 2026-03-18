@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import pandas as pd
+import json
+from pathlib import Path
 
 
-def step_04_engineer_features(dataframe: pd.DataFrame) -> pd.DataFrame:
+def step_03_engineer_features(dataframe: pd.DataFrame) -> pd.DataFrame:
     # Check if input is a pandas DataFrame
     if not isinstance(dataframe, pd.DataFrame):
         raise TypeError(
@@ -11,34 +13,57 @@ def step_04_engineer_features(dataframe: pd.DataFrame) -> pd.DataFrame:
         )
 
     selected_features = [
-        "Pysty_kiiht",
-        "Sivuheilahdus_kiiht",
-        "Nyökkimis_kiiht",
-        "Yhdistetty_kiiht_rms"
-
+        "vertical_acceleration",
+        "lateral_acceleration", 
+        "longitudinal_acceleration"
     ]
-
-    # Check if required columns exist in the dataframe
-    missing_features = [col for col in selected_features if col not in dataframe.columns]
+    
+    # Map Finnish column names to English
+    column_mapping = {
+        "Pysty_kiiht": "vertical_acceleration",
+        "Sivuheilahdus_kiiht": "lateral_acceleration",
+        "Nyökkimis_kiiht": "longitudinal_acceleration"
+    }
+    
+    # Create mapped dataframe
+    mapped_dataframe = dataframe.rename(columns=column_mapping)
+    
+    # Check if required columns exist in the mapped dataframe
+    missing_features = [col for col in selected_features if col not in mapped_dataframe.columns]
     if missing_features:
         raise ValueError(
             f"Required features are missing: {missing_features}. "
-            f"Available columns: {list(dataframe.columns)}"
+            f"Available columns: {list(mapped_dataframe.columns)}"
         )
 
-    engineered_dataframe = dataframe.loc[:, selected_features].copy()
-
+    engineered_dataframe = mapped_dataframe.loc[:, selected_features].copy()
+    
+    # Print preview of engineered features
     print()
     print("------------------------------------------------------------")
-    print("The data has been prepared for feature engineering.")
+    print("Feature engineering selected features.")
     print()
-    print(engineered_dataframe.head(5).to_string())
-
-    # Save results to Excel
-    output_path = "output/engineered_features.xlsx"
-    engineered_dataframe.to_excel(output_path, index=False)
-
+    print(engineered_dataframe.head().to_string())
     print()
-    print(f"Feature engineered data saved to: {output_path}")
+
+    # Save feature metadata
+    feature_metadata = {
+        'pipeline_version': '0.1',
+        'features': selected_features,
+        'feature_count': len(selected_features),
+        'data_rows': len(engineered_dataframe),
+        'feature_engineering_date': pd.Timestamp.now().isoformat(),
+        'description': 'Road condition acceleration measurements for anomaly detection'
+    }
+    
+    # Create output directory if it doesn't exist
+    metadata_path = Path("MLfiles/feature_metadata.json")
+    metadata_path.parent.mkdir(exist_ok=True)
+    
+    # Save metadata
+    with open(metadata_path, 'w') as f:
+        json.dump(feature_metadata, f, indent=2)
+    
+    print(f"Feature metadata saved to: {metadata_path}")
 
     return engineered_dataframe

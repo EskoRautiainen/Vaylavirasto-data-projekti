@@ -3,21 +3,21 @@ from __future__ import annotations
 import pandas as pd
 
 
-# Good road filtering criteria based on 75th percentile values for all speed data
+# Good road filtering criteria based on 25th percentile values for all speed data
 # These values are derived from all road measurements (speed-agnostic approach)
 GOOD_ROAD_CRITERIA = {
-    "Pysty_kiiht": 0.13,
-    "Sivuheilahdus_kiiht": 3.0,
-    "Nyökkimis_kiiht": 6.0,
+    "vertical_acceleration": 0.05,
+    "lateral_acceleration": 1.0,
+    "longitudinal_acceleration": 3.0,
 }
 
 
-def step_03_filter_good_road(dataframe: pd.DataFrame) -> pd.DataFrame:
+def step_04_filter_good_road(dataframe: pd.DataFrame) -> pd.DataFrame:
     """
     Filters the dataframe to retain only road segments that represent good road surface conditions.
 
-    This function uses speed-agnostic thresholds based on 75th percentile values from all speed data,
-    providing a broader baseline for anomaly detection across different speed limits.
+    This function uses speed-agnostic thresholds based on 25th percentile values from all speed data,
+    providing a precise baseline for anomaly detection across different speed limits.
 
     Args:
         dataframe: Input DataFrame containing road measurement data
@@ -84,8 +84,7 @@ def step_03_filter_good_road(dataframe: pd.DataFrame) -> pd.DataFrame:
         print(filtered_dataframe.head(5).to_string())
     else:
         print("Warning: No data remaining after good road filtering!")
-    print()
-
+    
     # Output validation: ensure data remains
     if filtered_dataframe.empty:
         raise ValueError(

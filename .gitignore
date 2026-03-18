@@ -211,7 +211,9 @@ __marimo__/
 .gpkg
 
 # Project outputs
-output/
+# MLfiles/
+# Allow only model and metadata files, ignore results
+MLfiles/anomaly_results.xlsx
 
 #Ignores everything inside Data folder but keeps the folder itself
 Data/*
