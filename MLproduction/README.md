@@ -77,43 +77,54 @@ Each step includes comprehensive error handling and data validation. If any step
 
 
 ## 3.1 Data Loading
+```text 
 Reads Excel file (.xlsx / .xlsm)
 Requires sheet:
 Raportti 10m MALLI
 Filters required columns
 Outputs a DataFrame with selected features
+```
 
 ## 3.2 Data Cleaning
+```text 
 Removes:
 Missing values
 Non-numeric values
 Invalid rows
 Keeps only valid ML input data
+```
 
 ## 3.3 Feature Engineering
+```text 
 Selects acceleration features:
 Pysty_kiiht
 Sivuheilahdus_kiiht
 Nyökkimis_kiiht
 Renames to model-ready format
+```
 
 ## 3.4 Load Model
+
 ```model = joblib.load('anomaly_model.pkl')```
 ```scaler = joblib.load('scaler.pkl')```
+```text 
 Loads pre-trained Isolation Forest model
 Loads fitted scaler
+```
 
 ## 3.5 Prediction (Production)
 ```scaled = scaler.transform(features)```
 ```predictions = model.predict(scaled)```
 ```scores = model.decision_function(scaled)```
+```text
 Applies scaling
 Outputs:
 predictions (1 = normal, -1 = anomaly)
 scores (anomaly strength)
+```
 
 ## 3.6 Build Results
-
+```text 
 Adds:
 anomaly_prediction
 anomaly_score
@@ -126,10 +137,10 @@ Fair	        ≤ -0.03
 Good	        ≤ 0.02
 Excellent	    > 0.02
 priority_score  (1 = highest priority)
-
+```
 
 ## 3.7 Excel Output
-
+```text 
 Saves results to:
 
 MLproduction/MLfiles/production_results_coloured.xlsx
@@ -137,9 +148,10 @@ Adds:
 Color scales (green → red)
 Highlighted feature columns
 Ratio columns (vs combined acceleration)
+```
 
 ## 4.0 Output
-
+```text 
 Main File
 production_results_coloured.xlsx
 
@@ -148,9 +160,10 @@ Original metadata
 Engineered features
 Predictions & scores
 Categorization & priority
+```
 
 ## 5.0 Error Handling
-
+```text 
 Each step is wrapped in try/except:
 
 Fails fast with clear messages:
@@ -158,3 +171,4 @@ Fails fast with clear messages:
 "Data cleaning failed"
 "Production failed"
 Prevents silent errors in production
+```
