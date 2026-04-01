@@ -14,7 +14,7 @@ This ML pipeline analyzes road condition data using acceleration measurements to
 python -m venv venv
 
 # Activate virtual environment
-venv\Scripts\activate
+source venv/Scripts/activate
 
 # Install dependencies
 pip install -r requirements.txt
