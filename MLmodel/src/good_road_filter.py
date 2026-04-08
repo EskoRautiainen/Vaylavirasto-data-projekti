@@ -1,26 +1,74 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import pandas as pd
 
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+OUTPUT_DIR = REPO_ROOT / "MLmodel" / "MLfiles"
 
-# Good road filtering criteria based on 25th percentile values for all speed data
-# These values are derived from all road measurements (speed-agnostic approach)
-GOOD_ROAD_CRITERIA = {
-    "vertical_acceleration": 0.05,
-    "lateral_acceleration": 1.0,
-    "longitudinal_acceleration": 3.0,
+
+REQUIRED_COLUMNS = [
+    "vertical_acceleration",
+    "lateral_acceleration",
+    "longitudinal_acceleration",
+]
+
+FEATURE_LABELS = {
+    "vertical_acceleration": "Pystykiihtyvyys",
+    "lateral_acceleration": "Sivuttaiskiihtyvyys",
+    "longitudinal_acceleration": "Pitkittaiskiihtyvyys",
 }
 
 
-def step_04_filter_good_road(dataframe: pd.DataFrame) -> pd.DataFrame:
+def _compute_dynamic_criteria(
+    dataframe: pd.DataFrame, required_columns: list[str], baseline_quantile: float
+) -> dict[str, float]:
+    criteria: dict[str, float] = {}
+    for column in required_columns:
+        criteria[column] = float(dataframe[column].quantile(baseline_quantile))
+    return criteria
+
+
+def _save_baseline_metadata(
+    criteria: dict[str, float],
+    baseline_quantile: float,
+    min_features_required: int,
+    original_rows: int,
+    filtered_rows: int,
+) -> None:
+    metadata = {
+        "baseline_quantile": baseline_quantile,
+        "min_features_required": min_features_required,
+        "criteria": criteria,
+        "original_rows": original_rows,
+        "filtered_rows": filtered_rows,
+        "retention_rate": (filtered_rows / original_rows) if original_rows else 0.0,
+        "generated_at": pd.Timestamp.now().isoformat(),
+    }
+    output_path = OUTPUT_DIR / "baseline_criteria.json"
+    output_path.parent.mkdir(exist_ok=True)
+    with open(output_path, "w", encoding="utf-8") as file:
+        json.dump(metadata, file, indent=2)
+    print(f"Baseline criteria saved to: {output_path}")
+
+
+def step_04_filter_good_road(
+    dataframe: pd.DataFrame,
+    baseline_quantile: float = 0.40,
+    min_features_required: int = 2,
+) -> pd.DataFrame:
     """
     Filters the dataframe to retain only road segments that represent good road surface conditions.
 
-    This function uses speed-agnostic thresholds based on 25th percentile values from all speed data,
-    providing a precise baseline for anomaly detection across different speed limits.
+    This function computes speed-agnostic dynamic thresholds from current data
+    using a quantile value, then filters rows that meet all criteria.
 
     Args:
         dataframe: Input DataFrame containing road measurement data
+        baseline_quantile: Quantile used to compute dynamic baseline thresholds
+        min_features_required: Minimum count of features that must satisfy thresholds
 
     Returns:
         DataFrame containing only good road segments
@@ -40,8 +88,13 @@ def step_04_filter_good_road(dataframe: pd.DataFrame) -> pd.DataFrame:
         print("Warning: Empty dataframe provided for good road filtering!")
         return dataframe.copy()
 
+    if not (0.0 < baseline_quantile <= 1.0):
+        raise ValueError(
+            f"baseline_quantile must be in range (0.0, 1.0], got {baseline_quantile}"
+        )
+
     # Check if required columns exist in the dataframe
-    required_columns = list(GOOD_ROAD_CRITERIA.keys())
+    required_columns = REQUIRED_COLUMNS
     missing_columns = [col for col in required_columns if col not in dataframe.columns]
 
     if missing_columns:
@@ -49,15 +102,27 @@ def step_04_filter_good_road(dataframe: pd.DataFrame) -> pd.DataFrame:
             f"Required columns for good road filtering are missing: {missing_columns}. "
             f"Available columns: {list(dataframe.columns)}"
         )
+    if not (1 <= min_features_required <= len(required_columns)):
+        raise ValueError(
+            f"min_features_required must be in range [1, {len(required_columns)}], "
+            f"got {min_features_required}"
+        )
 
     # Calculate filtering statistics before filtering for accurate reporting
     original_rows = len(dataframe)
 
-    # Apply filtering: keep only rows that meet ALL criteria
-    # Use direct boolean indexing for better performance
-    mask = (dataframe[required_columns[0]] <= GOOD_ROAD_CRITERIA[required_columns[0]])
-    for col in required_columns[1:]:
-        mask &= (dataframe[col] <= GOOD_ROAD_CRITERIA[col])
+    # Compute dynamic filtering criteria from current data
+    criteria = _compute_dynamic_criteria(dataframe, required_columns, baseline_quantile)
+
+    # Apply filtering: keep rows that satisfy at least min_features_required criteria.
+    # This is more robust when no external reference set exists.
+    threshold_hits = pd.DataFrame(
+        {
+            col: (dataframe[col] <= criteria[col]).astype(int)
+            for col in required_columns
+        }
+    )
+    mask = threshold_hits.sum(axis=1) >= min_features_required
 
     filtered_dataframe = dataframe[mask].copy()
 
@@ -70,9 +135,18 @@ def step_04_filter_good_road(dataframe: pd.DataFrame) -> pd.DataFrame:
     print("------------------------------------------------------------")
     print("Good road filtering applied.")
     print()
-    print("Filtering criteria (25th percentile thresholds for all speed data):")
-    for column, threshold in GOOD_ROAD_CRITERIA.items():
-        print(f"  {column} ≤ {threshold}")
+    percentile_text = int(baseline_quantile * 100)
+    print(
+        "Hyvan tien valintarajat "
+        f"(laskettu nykyisesta datasta, alaraja datan jakauman {percentile_text}. persentiilista):"
+    )
+    print(
+        f"Valintasaanto: vahintaan {min_features_required}/{len(required_columns)} "
+        "piirrettta oltava raja-arvon alapuolella."
+    )
+    for column, threshold in criteria.items():
+        label = FEATURE_LABELS.get(column, column)
+        print(f"  {label} ({column}) <= {threshold}")
     print()
     print(f"Original rows: {original_rows}")
     print(f"Rows after filtering: {filtered_rows}")
@@ -90,5 +164,13 @@ def step_04_filter_good_road(dataframe: pd.DataFrame) -> pd.DataFrame:
         raise ValueError(
             "Good road filtering removed all rows. No data remains for feature engineering."
         )
+
+    _save_baseline_metadata(
+        criteria,
+        baseline_quantile,
+        min_features_required,
+        original_rows,
+        filtered_rows,
+    )
 
     return filtered_dataframe

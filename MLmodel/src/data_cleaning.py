@@ -3,6 +3,15 @@ from __future__ import annotations
 import pandas as pd
 
 
+def _format_index_summary(indices: list[int], sample_size: int = 20) -> str:
+    if not indices:
+        return "none"
+    if len(indices) <= sample_size:
+        return f"{indices} (total: {len(indices)})"
+    preview = ", ".join(str(i) for i in indices[:sample_size])
+    return f"[{preview}, ...] (total: {len(indices)})"
+
+
 def step_02_clean_data(dataframe: pd.DataFrame) -> pd.DataFrame:
     # Check if input is a pandas DataFrame
     if not isinstance(dataframe, pd.DataFrame):
@@ -65,22 +74,22 @@ def step_02_clean_data(dataframe: pd.DataFrame) -> pd.DataFrame:
     print()
     
     # Phase 1: Missing values
-    if rows_with_missing_values:
-        print(f"Phase 1 - Removed rows with missing values: {rows_with_missing_values}")
-    else:
-        print("Phase 1 - Removed rows with missing values: none")
+    print(
+        "Phase 1 - Removed rows with missing values: "
+        f"{_format_index_summary(rows_with_missing_values)}"
+    )
     
     # Phase 2: Non-numeric values
-    if rows_with_non_numeric_values:
-        print(f"Phase 2 - Removed rows with non-numeric values: {rows_with_non_numeric_values}")
-    else:
-        print("Phase 2 - Removed rows with non-numeric values: none")
+    print(
+        "Phase 2 - Removed rows with non-numeric values: "
+        f"{_format_index_summary(rows_with_non_numeric_values)}"
+    )
     
     # Phase 3: Negative values
-    if rows_with_negative_values:
-        print(f"Phase 3 - Removed rows with negative values: {rows_with_negative_values}")
-    else:
-        print("Phase 3 - Removed rows with negative values: none")
+    print(
+        "Phase 3 - Removed rows with negative values: "
+        f"{_format_index_summary(rows_with_negative_values)}"
+    )
     
     print(f"Rows remaining after cleaning: {cleaned_rows}")
 
