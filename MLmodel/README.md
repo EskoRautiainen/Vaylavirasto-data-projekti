@@ -1,64 +1,73 @@
-# ML Pipeline for Road Condition Anomaly Detection
+# ML-putki tieolosuhteiden poikkeamien tunnistukseen
 
-## Overview
+## Yleiskuvaus
 
-This pipeline reads road measurement Excel files, builds a "very good road" baseline,
-trains an Isolation Forest model, and produces anomaly scores + categories for all rows.
+Tämä putki lukee tieaineiston Excel-tiedostoista, muodostaa dynaamisen hyvän tien vertailuaineiston, kouluttaa Isolation Forest -mallin ja tallentaa poikkeamatulokset vakavuusluokkineen.
 
-Pipeline steps:
-1. Load Excel data and required columns (`pys_kiiht`, `siv_kiiht`, `nyo_kiiht`, `yhd_kiiht`, `pituus`)
-2. Keep rows where `pituus == 10`
-3. Clean data (missing, non-numeric, negative values)
-4. Engineer features (`vertical/lateral/longitudinal_acceleration`)
-5. Build dynamic good-road baseline by quantile thresholding
-6. Scale baseline and all data with `StandardScaler`
-7. Train `IsolationForest` and score all rows
+Putken vaiheet:
+1. Ladataan Excel-data vaadituilla sarakkeilla (`pys_kiiht`, `siv_kiiht`, `nyo_kiiht`, `yhd_kiiht`, `pituus`)
+2. Pidetään vain rivit, joilla `pituus == 10`
+3. Puhdistetaan data (puuttuvat, ei-numeeriset ja negatiiviset arvot)
+4. Muodostetaan piirteet (`vertical/lateral/longitudinal_acceleration`)
+5. Muodostetaan dynaaminen hyvän tien vertailuaineisto nykyisestä ajodatasta
+6. Skaloidaan data `RobustScaler`-skaalaajalla (sovitus hyvän tien vertailuaineistoon)
+7. Koulutetaan `IsolationForest`, pisteytetään kaikki rivit ja luokitellaan poikkeamat
 
-## Run
+## Ajo
 
-From `MLmodel` directory:
+Aja komennot repositorion juuresta (`vaylavirasto-data-projekti`).
 
-```bash
-python ml_pipeline.py
+Aktivoi ensin repositorion juuressa oleva virtuaaliympäristö:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
 ```
 
-Optional input path (relative to repository root):
-
 ```bash
-python ml_pipeline.py Data
-python ml_pipeline.py Data/some_file.xlsx
+python MLmodel/ml_pipeline.py
+python MLmodel/ml_pipeline.py Data
+python MLmodel/ml_pipeline.py Data/some_file.xlsx
 ```
 
-## Input Handling
+Valinnainen `input_path` annetaan suhteessa repositorion juureen.
 
-- The loader scans all worksheets and tries header rows `0` and `1`.
-- Worksheet names are not hardcoded.
-- A worksheet is accepted when all required columns are found.
+## Input-vaatimukset
 
-## Baseline Logic
+- Input-tiedostojen tulee olla Excel-muotoa: `.xlsx` tai `.xlsm`.
+- Ainakin yhdestä välilehdestä täytyy löytyä sarakkeet:
+  `pys_kiiht`, `siv_kiiht`, `nyo_kiiht`, `yhd_kiiht`, `pituus`.
+- Lataus käy läpi kaikki välilehdet ja yrittää otsakerivejä `0` ja `1`.
+- Väliaikaiset lukitustiedostot (`~$...`) ohitetaan.
+- Vain rivit, joilla `pituus == 10`, otetaan mukaan.
+- Absoluuttiset input-polut hylätään.
+- Polkunavigointi (`..`) hylätään.
 
-"Good road" baseline is computed dynamically from current run data using quantile thresholds
-for these features:
+## Vertailuaineiston logiikka
 
+Hyvän tien vertailuaineisto muodostetaan dynaamisesti nykyisestä ajodatasta käyttäen arvoja:
+
+- `BASELINE_QUANTILE = 0.40` (`ml_pipeline.py`)
+- `MIN_FEATURES_REQUIRED = 2` (`ml_pipeline.py`)
+
+Vaaditut mallipiirteet:
 - `vertical_acceleration`
 - `lateral_acceleration`
 - `longitudinal_acceleration`
 
-The quantile value is an internal constant in `ml_pipeline.py`:
-
-- `BASELINE_QUANTILE = 0.15`
-
-This is intentionally strict to model only very good road conditions.
-
-Used baseline criteria are saved to:
-
+Vertailuaineiston metadata tallennetaan:
 - `MLmodel/MLfiles/baseline_criteria.json`
 
-## Model Training
+## Skaalaus
 
-Current Isolation Forest settings (`src/model_training.py`):
+Skaalauksessa käytetään `RobustScaler`-skaalaajaa (`src/data_scaling.py`), joka sovitetaan hyvän tien vertailuaineistoon. Sama skaalain käytetään sen jälkeen kaiken datan muunnokseen.
 
-- `contamination='auto'`
+Skaalain tallennetaan:
+- `MLmodel/MLfiles/scaler.pkl`
+
+## Mallin koulutus
+
+Nykyiset Isolation Forest -parametrit (`src/model_training.py`):
+- `contamination=0.10`
 - `n_estimators=300`
 - `max_samples=0.5`
 - `max_features=1.0`
@@ -66,31 +75,98 @@ Current Isolation Forest settings (`src/model_training.py`):
 - `random_state=42`
 - `n_jobs=1`
 
-A holdout split from good-road baseline is used for sanity check:
+Päättelylogiikka:
+- Malli koulutetaan skaalatulla hyvän tien vertailuaineistolla.
+- `decision_function`-pisteet lasketaan vertailuaineistolle ja kaikille riveille.
+- Poikkeamakynnys johdetaan hyvän tien pisteistä:
+  `GOOD_ROAD_NORMAL_SCORE_QUANTILE = 0.05`.
+- Lopullinen `anomaly_prediction` muodostetaan tästä johdetusta kynnyksestä.
+- Raakamallin ennuste tallennetaan myös sarakkeeseen `model_prediction_raw`.
+- Käytännössä suuremmat kiihtyvyysarvot lisäävät poikkeamaennusteen todennäköisyyttä.
+  Yksittäisiä poikkeuksia voi silti esiintyä, koska päätös perustuu kolmen piirteen yhteisvaikutukseen eikä yhteen arvoon.
 
-- `Good-road holdout anomaly rate`
+## Mitä ajo tuottaa
 
-## Categories
+Kaikki tuotokset tallennetaan hakemistoon `MLmodel/MLfiles`:
 
-Category assignment is consistent with `anomaly_prediction`:
+- `feature_metadata.json`: piirteet ja putken metadata.
+- `baseline_criteria.json`: dynaamiset vertailurajat ja säilymisprosentti.
+- `scaler.pkl`: sovitettu `RobustScaler`.
+- `anomaly_model.pkl`: koulutettu `IsolationForest`-malli.
+- `anomaly_results.xlsx`: rivikohtaiset ennusteet, pisteet ja luokat.
 
-- If prediction is anomaly (`-1`): `Critical`, `Poor`, `Fair`
-- If prediction is normal (`1`): `Good`, `Excellent`
+## Tulosten tulkinta
 
-## Outputs
+`anomaly_results.xlsx`-tiedoston keskeiset sarakkeet:
 
-All outputs are saved to absolute project path:
+- `anomaly_prediction`: `-1` = poikkeama, `1` = normaali.
+- `anomaly_score`: pienempi arvo = poikkeavampi rivi.
+- `anomaly_category`: `Critical`, `Poor`, `Fair`, `Good`, `Excellent`.
+- `priority_score`: numeerinen prioriteetti (`Critical=1 ... Excellent=5`).
+- `model_prediction_raw`: raaka `IsolationForest.predict` -tulos ennen mukautettua kynnyslogiikkaa.
 
-- `MLmodel/MLfiles/feature_metadata.json`
-- `MLmodel/MLfiles/baseline_criteria.json`
-- `MLmodel/MLfiles/scaler.pkl`
-- `MLmodel/MLfiles/anomaly_model.pkl`
-- `MLmodel/MLfiles/anomaly_results.xlsx`
+Käytännön tulkinta:
+- Suuremmat kiihtyvyysarvot ohjautuvat yleensä poikkeamaluokkiin.
+- Luokittelu on monimuuttujainen, joten yksittäisiä sarakekohtaisia poikkeuksia voi olla.
 
-## Dependencies
+## Inference Script (Model Usage)
 
-Install from:
+Example inference flow for new data using saved model + scaler:
+
+```python
+from pathlib import Path
+import joblib
+import pandas as pd
+
+FEATURES = [
+    "vertical_acceleration",
+    "lateral_acceleration",
+    "longitudinal_acceleration",
+]
+
+model = joblib.load(Path("MLmodel/MLfiles/anomaly_model.pkl"))
+scaler = joblib.load(Path("MLmodel/MLfiles/scaler.pkl"))
+
+# df_raw must already contain engineered features with these exact names
+missing = [c for c in FEATURES if c not in df_raw.columns]
+if missing:
+    raise ValueError(f"Missing required features: {missing}")
+
+# Enforce exact feature order before scaling and prediction
+X = df_raw.loc[:, FEATURES].copy()
+X_scaled = scaler.transform(X)
+X_scaled_df = pd.DataFrame(X_scaled, columns=FEATURES, index=X.index)
+
+scores = model.decision_function(X_scaled_df)
+raw_pred = model.predict(X_scaled_df)  # -1 anomaly, 1 normal
+```
+
+Huomiot:
+- Piirteiden nimet ja järjestys pitää säilyttää samoina kuin koulutuksessa.
+- Skaalaa data aina tallennetulla `scaler.pkl`-tiedostolla ennen mallikutsuja.
+
+## Riippuvuudet
+
+Asenna riippuvuudet:
 
 ```bash
 pip install -r requirements.txt
 ```
+
+## Mallin toimivuuden testaus (poimintoja tulostiedostosta)
+
+Tiedosto `MLmodel/MLfiles/anomaly_results.xlsx` soveltuu mallin käyttäytymisen validointiin (onko tulos looginen), mutta ei yksin riitä tarkkuuden arviointiin ilman ground truth -labeleita.
+
+Poimintoja nykyisestä tulosajosta:
+- Rivejä yhteensä: `1,042,431`
+- `anomaly_prediction = -1`: `479,379` (45.99 %)
+- `anomaly_prediction = 1`: `563,052` (54.01 %)
+- `model_prediction_raw` ja lopullinen `anomaly_prediction` erosivat `78,776` rivillä (7.56 %), koska lopullinen päätös käyttää erillistä score-kynnyslogiikkaa.
+- Kategoriat jakautuivat: `Critical` 11.50 %, `Poor` 11.50 %, `Fair` 22.99 %, `Good` 40.44 %, `Excellent` 13.57 %.
+
+Mitä tämän perusteella voi päätellä:
+- Luokittelu toimii johdonmukaisesti: suuremmat kiihtyvyydet painottuvat alempiin laatuluokkiin (`Critical/Poor/Fair`) ja pienemmät `Good/Excellent`-luokkiin.
+- Score-jakauma erottaa normaalit ja poikkeamat selkeästi.
+
+Mitä tämän perusteella ei voi päätellä:
+- Precision/recall/F1-arvoja ei voi arvioida luotettavasti ilman erillistä käsin labeloitua testidataa.
