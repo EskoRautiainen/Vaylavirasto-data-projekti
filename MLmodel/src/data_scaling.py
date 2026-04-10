@@ -3,14 +3,17 @@ from __future__ import annotations
 import pandas as pd
 import joblib
 from pathlib import Path
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import RobustScaler
+
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+OUTPUT_DIR = REPO_ROOT / "MLmodel" / "MLfiles"
 
 
-def step_05_data_scaling(good_road_dataframe: pd.DataFrame) -> tuple[pd.DataFrame, StandardScaler]:
+def step_05_data_scaling(good_road_dataframe: pd.DataFrame) -> tuple[pd.DataFrame, RobustScaler]:
     """
-    Scales features using StandardScaler for ML model compatibility.
+    Scales features using RobustScaler for ML model compatibility.
     
-    This function fits StandardScaler on the good road baseline data and returns
+    This function fits RobustScaler on the good road baseline data and returns
     both the scaled data and the fitted scaler for consistent transformation
     of all road data.
     
@@ -20,7 +23,7 @@ def step_05_data_scaling(good_road_dataframe: pd.DataFrame) -> tuple[pd.DataFram
     Returns:
         Tuple of (scaled_dataframe, scaler) where:
         - scaled_dataframe: DataFrame with scaled features
-        - scaler: Fitted StandardScaler object for transforming other data
+        - scaler: Fitted RobustScaler object for transforming other data
         
     Raises:
         TypeError: If input is not a pandas DataFrame
@@ -36,8 +39,8 @@ def step_05_data_scaling(good_road_dataframe: pd.DataFrame) -> tuple[pd.DataFram
     if good_road_dataframe.empty:
         raise ValueError("Input dataframe is empty for scaling!")
     
-    # Initialize StandardScaler
-    scaler = StandardScaler()
+    # Initialize RobustScaler (median + IQR), less sensitive to outliers.
+    scaler = RobustScaler()
     
     # Fit and transform the good road data
     scaled_data = scaler.fit_transform(good_road_dataframe)
@@ -52,25 +55,26 @@ def step_05_data_scaling(good_road_dataframe: pd.DataFrame) -> tuple[pd.DataFram
     # Print scaling statistics
     print()
     print("------------------------------------------------------------")
-    print("Data scaling applied using StandardScaler")
+    print("Datan skaalaus tehty (RobustScaler)")
     print()
-    print("Baseline statistics (good roads):")
-    
-    means_dict = scaled_dataframe.mean().round(3).to_dict()
-    std_dict = scaled_dataframe.std().round(3).to_dict()
-    
-    print("  Feature means:")
-    for feature, value in means_dict.items():
-        print(f"    {feature}: {value}")
-    
-    print("  Feature std:")
-    for feature, value in std_dict.items():
-        print(f"    {feature}: {value}")
+    print("Vertailuaineiston tilastot (hyvat tiet):")
+
+    medians_dict = scaled_dataframe.median().to_dict()
+    q25_dict = scaled_dataframe.quantile(0.25).to_dict()
+    q75_dict = scaled_dataframe.quantile(0.75).to_dict()
+
+    print("  Piirteiden mediaanit:")
+    for feature, value in medians_dict.items():
+        print(f"    {feature}: {value:.6f}")
+
+    print("  Piirteiden Q1/Q3:")
+    for feature in scaled_dataframe.columns:
+        print(f"    {feature}: Q1={q25_dict[feature]:.6f}, Q3={q75_dict[feature]:.6f}")
     
     print(f"  Scaled rows: {len(scaled_dataframe)}")
     
     # Save scaler for future use
-    scaler_path = Path("MLfiles/scaler.pkl")
+    scaler_path = OUTPUT_DIR / "scaler.pkl"
     scaler_path.parent.mkdir(exist_ok=True)
     joblib.dump(scaler, scaler_path)
     print(f"  Scaler saved to: {scaler_path}")

@@ -12,74 +12,77 @@ from src.data_scaling import step_05_data_scaling
 from src.model_training import step_06_model_training
 
 
-DEFAULT_DATA_FILE_PATH = (
-     Path(__file__).resolve().parent.parent
-     / "Data"
-     / "Paallystettyjen_teiden_lahtotiedot_ominaisuus_kuntotiedot_100m_L145695.xlsx"
- )
+REPO_ROOT = Path(__file__).resolve().parent.parent
+DEFAULT_DATA_DIR = REPO_ROOT / "Data"
+SUPPORTED_EXCEL_SUFFIXES = {".xlsx", ".xlsm"}
+# Baseline calibration constants
+BASELINE_QUANTILE = 0.40
+MIN_FEATURES_REQUIRED = 2
 
 
-def resolve_file_path(file_path: Path) -> Path:
-    if not isinstance(file_path, Path):
-        raise TypeError(f"file_path must be a Path object, got {type(file_path)}")
-    
-    # Prevent absolute paths for security reasons
-    if file_path.is_absolute():
+def resolve_input_path(input_path: Path | None) -> Path:
+    if input_path is None:
+        return DEFAULT_DATA_DIR
+
+    if not isinstance(input_path, Path):
+        raise TypeError(f"input_path must be a Path object, got {type(input_path)}")
+
+    if input_path.is_absolute():
         raise ValueError(
             "Absolute paths are not allowed for security reasons. "
             "Use relative paths from the repository root."
         )
-    
-    # Check for potentially dangerous path components
-    if ".." in file_path.parts:
+
+    if ".." in input_path.parts:
         raise ValueError(
             "Path traversal (..) is not allowed for security reasons."
         )
-    
-    if file_path == DEFAULT_DATA_FILE_PATH:
-        return file_path
 
-    if file_path.parent == Path("."):
-        return DEFAULT_DATA_FILE_PATH.parent / file_path.name
+    resolved = REPO_ROOT / input_path
+    if not resolved.exists():
+        raise FileNotFoundError(f"Input path not found: {resolved}")
 
-    if file_path.parent == Path("Data"):
-        return DEFAULT_DATA_FILE_PATH.parent / file_path.name
+    if resolved.is_dir():
+        return resolved
 
-    if file_path.parent == Path("data"):
-        return DEFAULT_DATA_FILE_PATH.parent / file_path.name
+    if resolved.is_file() and resolved.suffix.lower() in SUPPORTED_EXCEL_SUFFIXES:
+        return resolved
 
-    if file_path.parent != Path("."):
-        raise ValueError(
-            "Only a file name or Data/<file name> is supported. Place the Excel file in the repository Data directory."
-        )
-
-    return DEFAULT_DATA_FILE_PATH.parent / file_path.name
+    raise ValueError(
+        "Input path must be a directory containing Excel files or an Excel file (.xlsx/.xlsm)."
+    )
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Loads an Excel file from the repository Data directory and prints the column names and the first data row."
+        description=(
+            "Loads Excel data for ML pipeline. "
+            "By default reads from repository Data directory."
+        )
     )
     parser.add_argument(
-        "file_path",
+        "input_path",
         nargs="?",
         type=Path,
-        default=DEFAULT_DATA_FILE_PATH,
-        help="Excel file name located in the repository Data directory",
+        default=None,
+        help=(
+            "Optional relative path from repository root. "
+            "Can be a directory containing Excel files (recommended) or a single Excel file."
+        ),
     )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    file_path = resolve_file_path(args.file_path)
+    input_path = resolve_input_path(args.input_path)
     print()
     print("=== ML Pipeline Started ===")
     print()
     print("------------------------------------------------------------")
     
     try:
-        filtered_dataframe = step_01_load_data(file_path)
+        filtered_dataframe = step_01_load_data(input_path)
     except Exception as e:
         raise RuntimeError(f"Data loading failed: {e}") from e
     
@@ -96,7 +99,11 @@ def main() -> None:
 
     try:
         # Good road filtering on engineered data (only needed features)
-        good_road_dataframe = step_04_filter_good_road(engineered_dataframe)
+        good_road_dataframe = step_04_filter_good_road(
+            engineered_dataframe,
+            baseline_quantile=BASELINE_QUANTILE,
+            min_features_required=MIN_FEATURES_REQUIRED,
+        )
     except Exception as e:
         raise RuntimeError(f"Good road filtering failed: {e}") from e
 
@@ -116,7 +123,11 @@ def main() -> None:
         )
         
         # Model training and anomaly detection
-        anomaly_results, model = step_06_model_training(good_road_scaled, all_road_scaled)
+        anomaly_results, model = step_06_model_training(
+            good_road_scaled,
+            all_road_scaled,
+            engineered_dataframe,
+        )
     except Exception as e:
         raise RuntimeError(f"Model training failed: {e}") from e
     
