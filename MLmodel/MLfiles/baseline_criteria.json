@@ -1,0 +1,13 @@
+{
+  "baseline_quantile": 0.4,
+  "min_features_required": 2,
+  "criteria": {
+    "vertical_acceleration": 0.11,
+    "lateral_acceleration": 3.0,
+    "longitudinal_acceleration": 6.0
+  },
+  "original_rows": 1042431,
+  "filtered_rows": 501988,
+  "retention_rate": 0.4815551341047993,
+  "generated_at": "2026-04-08T08:53:15.273301"
+}
