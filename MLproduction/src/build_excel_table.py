@@ -1,23 +1,24 @@
 from pathlib import Path
 import pandas as pd
 
-# -------------------------
+# ----------------------------------------------------------------------------------------------------
 # EXCEL COLOR-CODING
-# -------------------------
+# ----------------------------------------------------------------------------------------------------
 def step_07_excel_colours(feature_df, output_path="./MLproduction/production_results_coloured.xlsx"):
     output_path = Path(output_path)
 
-    # Replace zeros with NaN to avoid division by zero
-    denominator = feature_df["Yhdistetty_kiiht_rms"].replace(0, pd.NA)
+    # Replace zeros 0.0 with 0.01. Don't want to divide by zero.
+    denominator = feature_df["yhd_kiiht"].replace(0, 0.01)
 
+    # Calculate ratios. See, which type of acceleration is most dominant.
     feature_df["Pysty_vs_yhdistetty"] = (feature_df["vertical_acceleration"] / denominator).round(3)
     feature_df["Sivu_vs_yhdistetty"] = (feature_df["lateral_acceleration"] / denominator).round(3)
     feature_df["Nyökkimis_vs_yhdistetty"] = (feature_df["longitudinal_acceleration"] / denominator).round(3)
 
-    # Move 'Yhdistetty_kiiht_rms' column to the rightmost position
+    # Move 'yhd_kiiht' column to the rightmost position
     cols = list(feature_df.columns)
-    if "Yhdistetty_kiiht_rms" in cols:
-        cols.append(cols.pop(cols.index("Yhdistetty_kiiht_rms")))
+    if "yhd_kiiht" in cols:
+        cols.append(cols.pop(cols.index("yhd_kiiht")))
         feature_df = feature_df[cols]
 
 
@@ -48,11 +49,9 @@ def step_07_excel_colours(feature_df, output_path="./MLproduction/production_res
                     'max_color': "#FF001E",   # red
                 })
 
-
-        # Solid light blue fill for 'Harjanne', 'Kaltevuus', 'Rms_mega_oik' and 'Delta'  columns
-        blue_fill = workbook.add_format({'bg_color': '#ADD8E6'})  # light blue hex
-
-        for col_name in ['Harjanne', 'Kaltevuus', 'Rms_mega_oik', 'Delta']:
+        # Add blue fill to specific columns for readability
+        blue_fill = workbook.add_format({'bg_color': '#ADD8E6'})  # light blue
+        for col_name in ['ura_max', 'harjanne', 'rms_mega_oik', 'delta']:
             if col_name in feature_df.columns:
                 col_idx = feature_df.columns.get_loc(col_name)
                 # Apply solid fill from row 1 (first data row) to last_row

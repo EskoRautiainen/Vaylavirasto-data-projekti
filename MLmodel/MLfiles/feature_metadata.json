@@ -6,7 +6,7 @@
     "longitudinal_acceleration"
   ],
   "feature_count": 3,
-  "data_rows": 1042431,
-  "feature_engineering_date": "2026-04-08T08:53:15.182299",
+  "data_rows": 118743,
+  "feature_engineering_date": "2026-04-13T17:33:51.583581",
   "description": "Road condition acceleration measurements for anomaly detection"
 }
