@@ -12,6 +12,7 @@ OUTPUT_COLUMNS = [
     'kaista',
     'ajorata',
     'aosa',
+    'aet',
     'losa',
     'let',
     'pituus',
@@ -116,15 +117,20 @@ def _read_matching_sheet(file_path: Path) -> tuple[pd.DataFrame, str, int]:
 
 
 # ----------------------------------------------------------------------------------------------------
-#   KEEP ONLY ROWS WHERE PITUUS = 10
+#   KEEP ONLY ROWS WHERE PITUUS IS 10
 # ----------------------------------------------------------------------------------------------------
-def _filter_pituus_10(dataframe: pd.DataFrame) -> pd.DataFrame:
+def _filter_pituus(dataframe: pd.DataFrame) -> pd.DataFrame:
     pituus_numeric = pd.to_numeric(
         dataframe["pituus"].astype(str).str.replace(",", ".", regex=False), # Handle decimal format
-        errors="coerce",                                    # Invalid values become NaN
+        errors="coerce",                                                    # Invalid values become NaN
     )
-    return dataframe.loc[pituus_numeric == 10].copy()
+    mask_valid = pituus_numeric == 10
+    mask_removed = ~mask_valid
 
+    removed_count = mask_removed.sum()
+    print(f"Removed {removed_count} rows where 'pituus' is not 10")
+
+    return dataframe.loc[mask_valid].copy()
 
 # ----------------------------------------------------------------------------------------------------
 #   MAIN LOADER - ENTRY POINT
@@ -132,7 +138,8 @@ def _filter_pituus_10(dataframe: pd.DataFrame) -> pd.DataFrame:
 def step_01_load_data(file_path: Path) -> pd.DataFrame:
     validated_path = Path(file_path)
     excel_files = _discover_excel_files(validated_path)
-
+    print("------------------------------------------------------------")
+    print()
     print("Reading Excel files. Please wait...")
     print()
 
@@ -141,7 +148,7 @@ def step_01_load_data(file_path: Path) -> pd.DataFrame:
 
     for excel_file in excel_files:
         source_dataframe, sheet_name, _ = _read_matching_sheet(excel_file)
-        filtered_source = _filter_pituus_10(source_dataframe)
+        filtered_source = _filter_pituus(source_dataframe)
         rows_picked = len(filtered_source)
         total_rows_picked += rows_picked
 

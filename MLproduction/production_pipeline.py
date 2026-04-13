@@ -27,6 +27,7 @@ selected_features = [
     'kaista',
     'ajorata',
     'aosa',
+    'aet',
     'losa',
     'let',
     'pituus',
@@ -92,6 +93,11 @@ def run_pipeline():
         predictions, scores = step_05_run_production(engineered_features, model, scaler) # Run production and get predictions
     except Exception as e:
         raise RuntimeError(f"Production (prediction) failed: {e}") from e 
+
+        print("metadata_cleaned:", len(metadata_cleaned))
+        print("engineered:", len(engineered_features))
+        print("predictions:", len(predictions))
+        print("scores:", len(scores))
 
 # BUILD RESULTS
     try:
