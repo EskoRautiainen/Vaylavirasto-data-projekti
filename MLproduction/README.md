@@ -23,7 +23,7 @@ source venv/Scripts/activate
 pip install -r MLmodel/requirements.txt
 
 # Run the pipeline
-python ml_pipeline.py "Paallystettyjen_teiden_lahtotiedot_ominaisuus_kuntotiedot_100m_L145695.xlsx"
+python MLproduction/ml_pipeline.py
 ```
 
 **Linux/Mac:**
@@ -38,7 +38,7 @@ source venv/bin/activate
 pip install -r MLmodel/requirements.txt
 
 # Run the pipeline
-python ml_pipeline.py "Paallystettyjen_teiden_lahtotiedot_ominaisuus_kuntotiedot_100m_L145695.xlsx"
+python MLproduction/ml_pipeline.py
 ```
 
 ### Using the virtual environment
