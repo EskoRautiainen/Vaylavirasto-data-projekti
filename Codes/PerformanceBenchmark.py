@@ -88,7 +88,17 @@ def main():
     # Feature counts
     result["feature_count"] = len(gdf)
 
-    # Vertex counts
+    # Vertex counts web and original gdf
+    gdf_web = gdf.to_crs(epsg=3857).copy()
+    gdf_web["geometry"] = gdf_web.geometry.simplify(7, preserve_topology=True)
+    gdf_web = gdf_web.to_crs(epsg=4326)
+
+    vertex_counts = gdf_web.geometry.apply(count_vertices)
+    result["total_vertices_optimized"] = int(vertex_counts.sum())
+    result["avg_vertices_per_feature_optimized"] = round(float(vertex_counts.mean()), 2) if len(vertex_counts) else 0.0
+    result["max_vertices_in_feature_optimized"] = int(vertex_counts.max()) if len(vertex_counts) else 0
+
+    #Original gdf
     vertex_counts = gdf.geometry.apply(count_vertices)
     result["total_vertices"] = int(vertex_counts.sum())
     result["avg_vertices_per_feature"] = round(float(vertex_counts.mean()), 2) if len(vertex_counts) else 0.0
@@ -134,7 +144,7 @@ def open_csv_as_html(df, output_path):
         color="#d4edda"
     ).to_html()
 
-    # Optional: add simple styling
+    # add simple styling
     styled_html = f"""
     <html>
     <head>

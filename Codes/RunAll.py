@@ -4,6 +4,8 @@ import sys
 import time
 import os
 
+#NOTE: check single lane road lane seperation per direction, and if it is possible to split them into separate features
+
 # --------------------------------------------------
 # SETTINGS AND TOGGLES
 # --------------------------------------------------
@@ -11,7 +13,7 @@ RUN_DATA_HANDLER = False
 RUN_DATA_TO_VISUAL = True
 RUN_PERFORMANCE_BENCHMARK = True
 # RUN_NOTE will be added to the benchmark log to help identify the context of this run.
-RUN_NOTE = "geometry simplification test with 10 and line weight 3, no sticky tooltip"
+RUN_NOTE = "simplify 2m"  # Example: "Test run with latest code changes, including lane index calculation refactor and enhanced performance logging."
 
 # Optional: stop immediately if one script fails
 STOP_ON_ERROR = True
