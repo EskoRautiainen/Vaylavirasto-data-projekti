@@ -1,23 +1,24 @@
 from pathlib import Path
 import pandas as pd
 
-# -------------------------
+# ----------------------------------------------------------------------------------------------------
 # EXCEL COLOR-CODING
-# -------------------------
+# ----------------------------------------------------------------------------------------------------
 def step_07_excel_colours(feature_df, output_path="./MLproduction/production_results_coloured.xlsx"):
     output_path = Path(output_path)
 
-    # Replace zeros with NaN to avoid division by zero
-    denominator = feature_df["Yhdistetty_kiiht_rms"].replace(0, pd.NA)
+    # Replace zeros 0.0 with 0.05. Don't want to divide by zero.
+    denominator = feature_df["yhd_kiiht"].replace(0, 0.05)
 
+    # Calculate ratios. See, which type of acceleration is most dominant.
     feature_df["Pysty_vs_yhdistetty"] = (feature_df["vertical_acceleration"] / denominator).round(3)
     feature_df["Sivu_vs_yhdistetty"] = (feature_df["lateral_acceleration"] / denominator).round(3)
     feature_df["Nyökkimis_vs_yhdistetty"] = (feature_df["longitudinal_acceleration"] / denominator).round(3)
 
-    # Move 'Yhdistetty_kiiht_rms' column to the rightmost position
+    # Move 'yhd_kiiht' column to the rightmost position
     cols = list(feature_df.columns)
-    if "Yhdistetty_kiiht_rms" in cols:
-        cols.append(cols.pop(cols.index("Yhdistetty_kiiht_rms")))
+    if "yhd_kiiht" in cols:
+        cols.append(cols.pop(cols.index("yhd_kiiht")))
         feature_df = feature_df[cols]
 
 
@@ -33,6 +34,7 @@ def step_07_excel_colours(feature_df, output_path="./MLproduction/production_res
 
         last_row = len(feature_df)  # number of rows
         vs_columns = ["Pysty_vs_yhdistetty", "Sivu_vs_yhdistetty", "Nyökkimis_vs_yhdistetty"]
+        ride_columns = ["vertical_acceleration", "lateral_acceleration", "longitudinal_acceleration"]
 
         for col_name in vs_columns:
             if col_name in feature_df.columns:
@@ -47,12 +49,37 @@ def step_07_excel_colours(feature_df, output_path="./MLproduction/production_res
                     'mid_color': "#FFDB4B",   # yellow
                     'max_color': "#FF001E",   # red
                 })
+        if "yhd_kiiht" in feature_df.columns:
+            col_idx = feature_df.columns.get_loc("yhd_kiiht")
+            worksheet.conditional_format(1, col_idx, last_row, col_idx, {
+                'type': '3_color_scale',
+                'min_type': 'min',
+                'mid_type': 'percentile',
+                'mid_value': 50,
+                'max_type': 'max',
+                'min_color': "#00FF33",   # green
+                'mid_color': "#FFDB4B",   # yellow
+                'max_color': "#FF001E",   # red
+                })
+        for col_name in ride_columns:
+            if col_name in feature_df.columns:
+                col_idx = feature_df.columns.get_loc(col_name)
+                worksheet.conditional_format(1, col_idx, last_row, col_idx, {
+                    'type': '3_color_scale',
+                    'min_type': 'min',
+                    'mid_type': 'percentile',
+                    'mid_value': 50,
+                    'max_type': 'max',
+                    'min_color': "#00FF33",
+                    'mid_color': "#FFDB4B",
+                    'max_color': "#FF001E",
+                })
 
 
-        # Solid light blue fill for 'Harjanne', 'Kaltevuus', 'Rms_mega_oik' and 'Delta'  columns
-        blue_fill = workbook.add_format({'bg_color': '#ADD8E6'})  # light blue hex
 
-        for col_name in ['Harjanne', 'Kaltevuus', 'Rms_mega_oik', 'Delta']:
+        # Add blue fill to specific columns for readability
+        blue_fill = workbook.add_format({'bg_color': '#ADD8E6'})  # light blue
+        for col_name in ['ura_max', 'harjanne_ka', 'kaltevuus', 'rms_mega_oik', 'delta', 'tl332_paapak']:
             if col_name in feature_df.columns:
                 col_idx = feature_df.columns.get_loc(col_name)
                 # Apply solid fill from row 1 (first data row) to last_row

@@ -23,7 +23,7 @@ source venv/Scripts/activate
 pip install -r MLmodel/requirements.txt
 
 # Run the pipeline
-python ml_pipeline.py "Paallystettyjen_teiden_lahtotiedot_ominaisuus_kuntotiedot_100m_L145695.xlsx"
+python MLmodel/ml_pipeline.py
 ```
 
 **Linux/Mac:**
@@ -38,7 +38,7 @@ source venv/bin/activate
 pip install -r MLmodel/requirements.txt
 
 # Run the pipeline
-python ml_pipeline.py "Paallystettyjen_teiden_lahtotiedot_ominaisuus_kuntotiedot_100m_L145695.xlsx"
+python MLmodel/ml_pipeline.py
 ```
 
 ### Using the virtual environment
@@ -53,7 +53,7 @@ The virtual environment ensures that all dependencies are isolated and consisten
 Run the program from the `Vaylavirasto-data-projekti` directory:
 
 ```bash
-python production_pipeline.py
+python MLproduction/production_pipeline.py
 ```
 
 The input must be an Excel file name with the extension `.xlsx` or `.xlsm`.

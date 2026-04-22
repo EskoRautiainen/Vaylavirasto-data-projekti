@@ -1,14 +1,14 @@
 import pandas as pd
 
-# -------------------------
-# CATEGORIZATION
-# -------------------------
+# ----------------------------------------------------------------------------------------------------
+#   CATEGORIZATION
+# ----------------------------------------------------------------------------------------------------
 def categorize(scores):
     categories = []
 
-    for s in scores:
+    for s in scores: # Categorize anomaly scores
         if s <= -0.15:
-            categories.append('Critical')
+            categories.append('Critical') 
         elif s <= -0.08:
             categories.append('Poor')
         elif s <= -0.03:
@@ -21,9 +21,9 @@ def categorize(scores):
     return categories
 
 
-# -------------------------
-# BUILD RESULTS
-# -------------------------
+# ----------------------------------------------------------------------------------------------------
+#   BUILD RESULTS
+# ----------------------------------------------------------------------------------------------------
 def step_06_build_results(metadata, features, predictions, scores):
     result = metadata.copy()
 
@@ -37,7 +37,7 @@ def step_06_build_results(metadata, features, predictions, scores):
 
     result['anomaly_category'] = categorize(scores)
 
-    result['priority_score'] = result['anomaly_category'].map({
+    result['priority_score'] = result['anomaly_category'].map({ # Assign priority scores
         'Critical': 1,
         'Poor': 2,
         'Fair': 3,
