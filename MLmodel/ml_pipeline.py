@@ -10,16 +10,24 @@ from src.good_road_filter import step_04_filter_good_road
 from src.data_loading import step_01_load_data
 from src.data_scaling import step_05_data_scaling
 from src.model_training import step_06_model_training
+from src.model_testing import step_07_model_testing
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DATA_DIR = REPO_ROOT / "Data"
 SUPPORTED_EXCEL_SUFFIXES = {".xlsx", ".xlsm"}
 # Baseline calibration constants
-BASELINE_QUANTILE = 0.40
-MIN_FEATURES_REQUIRED = 2
+MIN_FEATURES_REQUIRED = 3
+ABSOLUTE_GOOD_ROAD_THRESHOLDS = {
+    "pys_kiiht": 0.08,
+    "siv_kiiht": 2.0,
+    "nyo_kiiht": 4.0,
+}
 
 
+# -------------------------
+# INPUT PATH RESOLUTION
+# -------------------------
 def resolve_input_path(input_path: Path | None) -> Path:
     if input_path is None:
         return DEFAULT_DATA_DIR
@@ -53,6 +61,9 @@ def resolve_input_path(input_path: Path | None) -> Path:
     )
 
 
+# -------------------------
+# ARGUMENT PARSING
+# -------------------------
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
@@ -73,6 +84,9 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+# -------------------------
+# PIPELINE EXECUTION
+# -------------------------
 def main() -> None:
     args = parse_args()
     input_path = resolve_input_path(args.input_path)
@@ -101,8 +115,8 @@ def main() -> None:
         # Good road filtering on engineered data (only needed features)
         good_road_dataframe = step_04_filter_good_road(
             engineered_dataframe,
-            baseline_quantile=BASELINE_QUANTILE,
             min_features_required=MIN_FEATURES_REQUIRED,
+            absolute_criteria=ABSOLUTE_GOOD_ROAD_THRESHOLDS,
         )
     except Exception as e:
         raise RuntimeError(f"Good road filtering failed: {e}") from e
@@ -114,6 +128,12 @@ def main() -> None:
         raise RuntimeError(f"Data scaling failed: {e}") from e
 
     try:
+        # Model training on good road baseline
+        model = step_06_model_training(good_road_scaled)
+    except Exception as e:
+        raise RuntimeError(f"Model training failed: {e}") from e
+
+    try:
         # Scale all road data using fitted scaler
         all_road_scaled_data = scaler.transform(engineered_dataframe)
         all_road_scaled = pd.DataFrame(
@@ -121,15 +141,15 @@ def main() -> None:
             columns=engineered_dataframe.columns, 
             index=engineered_dataframe.index
         )
-        
-        # Model training and anomaly detection
-        anomaly_results, model = step_06_model_training(
-            good_road_scaled,
+
+        # Model testing / inference on all-road data
+        step_07_model_testing(
+            model,
             all_road_scaled,
             engineered_dataframe,
         )
     except Exception as e:
-        raise RuntimeError(f"Model training failed: {e}") from e
+        raise RuntimeError(f"Model testing failed: {e}") from e
     
     print()
     print("------------------------------------------------------------")

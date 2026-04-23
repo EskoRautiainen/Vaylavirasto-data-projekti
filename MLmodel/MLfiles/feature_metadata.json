@@ -1,12 +1,16 @@
 {
   "pipeline_version": "0.1",
   "features": [
-    "vertical_acceleration",
-    "lateral_acceleration",
-    "longitudinal_acceleration"
+    "pys_kiiht",
+    "siv_kiiht",
+    "nyo_kiiht"
   ],
   "feature_count": 3,
   "data_rows": 1042431,
+<<<<<<< HEAD
+  "feature_engineering_date": "2026-04-22T09:32:27.652021"
+=======
   "feature_engineering_date": "2026-04-13T22:32:19.583225",
   "description": "Road condition acceleration measurements for anomaly detection"
+>>>>>>> 8fc2a10a40dc79524b7b4e0be093f08d8aaba90b
 }

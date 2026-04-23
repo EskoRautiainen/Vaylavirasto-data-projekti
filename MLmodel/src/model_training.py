@@ -1,205 +1,148 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 
 import joblib
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import IsolationForest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 OUTPUT_DIR = REPO_ROOT / "MLmodel" / "MLfiles"
-GOOD_ROAD_NORMAL_SCORE_QUANTILE = 0.05
 
 
+@dataclass
+class BaselineDistanceModel:
+    """
+    One-class baseline distance model.
+
+    The model is fitted on good-road baseline data only. It uses robust-style
+    scaled features, clips negative values to zero (upward-only deviation), and
+    computes squared Mahalanobis distance from the baseline center.
+    """
+
+    mean_: np.ndarray
+    inv_cov_: np.ndarray
+    threshold_: float
+    feature_names_: list[str]
+    threshold_quantile_: float
+
+    def _prepare(self, X: pd.DataFrame | np.ndarray) -> np.ndarray:
+        if isinstance(X, pd.DataFrame):
+            X_arr = X.loc[:, self.feature_names_].to_numpy(dtype=float, copy=False)
+        else:
+            X_arr = np.asarray(X, dtype=float)
+        # Only upward deviations from baseline center contribute to badness.
+        return np.clip(X_arr, a_min=0.0, a_max=None)
+
+    def score_samples(self, X: pd.DataFrame | np.ndarray) -> np.ndarray:
+        Z = self._prepare(X)
+        diff = Z - self.mean_
+        # Squared Mahalanobis distance per row
+        return np.einsum("ij,jk,ik->i", diff, self.inv_cov_, diff)
+
+    def decision_function(self, X: pd.DataFrame | np.ndarray) -> np.ndarray:
+        # Larger = more normal, smaller = more anomalous (sklearn-like semantics)
+        d2 = self.score_samples(X)
+        return self.threshold_ - d2
+
+    def predict(self, X: pd.DataFrame | np.ndarray) -> np.ndarray:
+        d2 = self.score_samples(X)
+        return np.where(d2 > self.threshold_, -1, 1).astype(int)
+
+
+# -------------------------
+# MODEL TRAINING
+# -------------------------
 def step_06_model_training(
     good_road_scaled: pd.DataFrame,
-    all_road_scaled: pd.DataFrame,
-    all_road_unscaled: pd.DataFrame,
-) -> tuple[pd.DataFrame, IsolationForest]:
+) -> BaselineDistanceModel:
     """
-    Trains Isolation Forest model for anomaly detection.
-
-    This function trains an Isolation Forest model on good road baseline data
-    and makes predictions on all road data to identify anomalies.
+    Trains one-class baseline distance model on good-road baseline data.
 
     Args:
         good_road_scaled: Scaled good road baseline data
-        all_road_scaled: Scaled all road data
-        all_road_unscaled: Unscaled all road data (same features/order as all_road_scaled)
 
     Returns:
-        Tuple of (results_dataframe, trained_model) where:
-        - results_dataframe: DataFrame with anomaly predictions and scores
-        - trained_model: Fitted IsolationForest model
+        trained_model: Fitted BaselineDistanceModel
 
     Raises:
-        TypeError: If inputs are not pandas DataFrames
-        ValueError: If input dataframes are empty
+        TypeError: If input is not a pandas DataFrame
+        ValueError: If input dataframe is empty
     """
-    # Check inputs
-    if (
-        not isinstance(good_road_scaled, pd.DataFrame)
-        or not isinstance(all_road_scaled, pd.DataFrame)
-        or not isinstance(all_road_unscaled, pd.DataFrame)
-    ):
-        raise TypeError("All inputs must be pandas DataFrames")
+    if not isinstance(good_road_scaled, pd.DataFrame):
+        raise TypeError("good_road_scaled must be a pandas DataFrame")
+    if good_road_scaled.empty:
+        raise ValueError("good_road_scaled cannot be empty")
 
-    if good_road_scaled.empty or all_road_scaled.empty or all_road_unscaled.empty:
-        raise ValueError("Input dataframes cannot be empty")
-    if len(all_road_scaled) != len(all_road_unscaled):
-        raise ValueError(
-            "all_road_scaled and all_road_unscaled row counts must match"
-        )
+    threshold_quantile = 0.99
+    regularization = 1e-6
 
-    # Model parameters (calibrated defaults)
-    contamination = 0.10
-    n_estimators = 300
-    max_samples = 0.5
-    max_features = 1.0
-    bootstrap = False
-    n_jobs = 1
-    random_state = 42
-
-    # Initialize model
-    model = IsolationForest(
-        contamination=contamination,
-        n_estimators=n_estimators,
-        max_samples=max_samples,
-        max_features=max_features,
-        bootstrap=bootstrap,
-        n_jobs=n_jobs,
-        random_state=random_state,
-    )
-
-    # Get feature names
     features = good_road_scaled.columns.tolist()
 
-    # Train model on good roads baseline
-    model.fit(good_road_scaled[features])
-
-    # Score good-road baseline and all roads.
-    # Threshold is derived from the lower tail of good-road score distribution.
-    good_road_scores = model.decision_function(good_road_scaled[features])
-    scores = model.decision_function(all_road_scaled[features])
-    normal_threshold = float(
-        pd.Series(good_road_scores).quantile(GOOD_ROAD_NORMAL_SCORE_QUANTILE)
-    )
-    predictions = np.where(scores < normal_threshold, -1, 1).astype(int)
-    raw_model_predictions = model.predict(all_road_scaled[features])
-
-    # Create results dataframe
-    results = all_road_scaled.copy()
-    results["vertical_acceleration_raw"] = all_road_unscaled["vertical_acceleration"].values
-    results["lateral_acceleration_raw"] = all_road_unscaled["lateral_acceleration"].values
-    results["longitudinal_acceleration_raw"] = all_road_unscaled[
-        "longitudinal_acceleration"
-    ].values
-    results["anomaly_prediction"] = predictions
-    results["model_prediction_raw"] = raw_model_predictions
-    results["anomaly_score"] = scores
-
-    # Add anomaly classification
-    results["anomaly_type"] = results["anomaly_prediction"].map({1: "Normal", -1: "Anomaly"})
-
-    # Dynamic severity categories based on score distributions from current run.
-    categories = pd.Series(index=results.index, dtype="object")
-    anomaly_mask = results["anomaly_prediction"] == -1
-    normal_mask = ~anomaly_mask
-
-    anomaly_q25 = anomaly_q50 = np.nan
-    if anomaly_mask.any():
-        anomaly_scores = results.loc[anomaly_mask, "anomaly_score"]
-        anomaly_q25 = float(anomaly_scores.quantile(0.25))
-        anomaly_q50 = float(anomaly_scores.quantile(0.50))
-        categories.loc[anomaly_mask & (results["anomaly_score"] <= anomaly_q25)] = "Critical"
-        categories.loc[
-            anomaly_mask
-            & (results["anomaly_score"] > anomaly_q25)
-            & (results["anomaly_score"] <= anomaly_q50)
-        ] = "Poor"
-        categories.loc[anomaly_mask & (results["anomaly_score"] > anomaly_q50)] = "Fair"
-
-    normal_q75 = np.nan
-    if normal_mask.any():
-        normal_scores = results.loc[normal_mask, "anomaly_score"]
-        normal_q75 = float(normal_scores.quantile(0.75))
-        categories.loc[normal_mask & (results["anomaly_score"] < normal_q75)] = "Good"
-        categories.loc[normal_mask & (results["anomaly_score"] >= normal_q75)] = "Excellent"
-
-    results["anomaly_category"] = categories.fillna("Good")
-
-    # Add priority scoring
-    priority_mapping = {
-        "Critical": 1,
-        "Poor": 2,
-        "Fair": 3,
-        "Good": 4,
-        "Excellent": 5,
-    }
-    results["priority_score"] = results["anomaly_category"].map(priority_mapping)
-
-    # Calculate statistics
-    anomaly_count = int((predictions == -1).sum())
-    normal_count = int((predictions == 1).sum())
-    total_count = len(predictions)
-    raw_model_mismatch = int((results["anomaly_prediction"] != results["model_prediction_raw"]).sum())
-
-    # Print results
-    print()
     print("------------------------------------------------------------")
-    print("Model training completed using Isolation Forest")
+    print("Model training started. This may take a while, please wait...")
+    print()
+
+    # Use only upward deviation from good baseline center.
+    X = good_road_scaled.loc[:, features].to_numpy(dtype=float, copy=False)
+    Z = np.clip(X, a_min=0.0, a_max=None)
+
+    mean_vec = Z.mean(axis=0)
+    cov = np.cov(Z, rowvar=False)
+    if np.ndim(cov) == 0:
+        cov = np.array([[float(cov)]], dtype=float)
+    cov = np.asarray(cov, dtype=float)
+    cov += np.eye(cov.shape[0]) * regularization
+    inv_cov = np.linalg.pinv(cov)
+
+    diff = Z - mean_vec
+    d2 = np.einsum("ij,jk,ik->i", diff, inv_cov, diff)
+    threshold = float(np.quantile(d2, threshold_quantile))
+
+    model = BaselineDistanceModel(
+        mean_=mean_vec,
+        inv_cov_=inv_cov,
+        threshold_=threshold,
+        feature_names_=features,
+        threshold_quantile_=threshold_quantile,
+    )
+
+    # Training-only score summary on good-road baseline.
+    good_road_scores = model.decision_function(good_road_scaled[features])
+    good_road_anomaly_scores = -good_road_scores
+
+    print("Model training completed using baseline distance model")
     print()
     print("Model parameters:")
-    print(f"  Contamination: {contamination}")
-    print(f"  N_estimators: {n_estimators}")
-    print(f"  Max samples: {max_samples}")
-    print(f"  Max features: {max_features}")
-    print(f"  Bootstrap: {bootstrap}")
-    print(f"  N jobs: {n_jobs}")
-    print(f"  Random state: {random_state}")
-    print(
-        "  Good-road normal threshold quantile: "
-        f"{GOOD_ROAD_NORMAL_SCORE_QUANTILE}"
-    )
-    print(f"  Derived anomaly threshold (score): {normal_threshold:.6f}")
+    print(f"  Threshold quantile (baseline): {threshold_quantile}")
+    print(f"  Covariance regularization: {regularization}")
+    print(f"  Distance threshold (d2): {threshold:.6f}")
     print("  Features:")
     for feature in features:
         print(f"    {feature}")
     print()
-    print("Training results:")
-    print(f"  Normal roads: {normal_count} ({normal_count / total_count * 100:.1f}%)")
-    print(f"  Anomalous roads: {anomaly_count} ({anomaly_count / total_count * 100:.1f}%)")
-    print(f"  Total roads: {total_count}")
-    print(f"  Actual contamination rate: {anomaly_count / total_count:.4f}")
-    print(f"  Difference vs raw model prediction rows: {raw_model_mismatch}")
-    print()
-    print("Anomaly category distribution:")
-    category_counts = results["anomaly_category"].value_counts()
-    for category in ["Critical", "Poor", "Fair", "Good", "Excellent"]:
-        count = int(category_counts.get(category, 0))
-        percentage = (count / total_count) * 100
-        print(f"  {category}: {count} ({percentage:.1f}%)")
+
+    print("Training summary (good-road baseline only):")
+    print("  Dataset used: good_road_scaled")
+    print(f"  Training rows (good_road_scaled): {len(good_road_scaled)}")
+    print(
+        "  Good-road normality score min/median/max: "
+        f"{float(np.min(good_road_scores)):.6f} / "
+        f"{float(np.median(good_road_scores)):.6f} / "
+        f"{float(np.max(good_road_scores)):.6f}"
+    )
+    print(
+        "  Good-road anomaly score min/median/max: "
+        f"{float(np.min(good_road_anomaly_scores)):.6f} / "
+        f"{float(np.median(good_road_anomaly_scores)):.6f} / "
+        f"{float(np.max(good_road_anomaly_scores)):.6f}"
+    )
     print()
 
-    print("Dynamic thresholds (from current run):")
-    print(f"  Good/Anomaly score boundary: {normal_threshold:.6f}")
-    if anomaly_mask.any():
-        print(f"  Critical/Poor anomaly boundary: {anomaly_q25:.6f}")
-        print(f"  Poor/Fair anomaly boundary: {anomaly_q50:.6f}")
-    if normal_mask.any():
-        print(f"  Good/Excellent normal boundary: {normal_q75:.6f}")
-    print()
-
-    # Save model
     model_path = OUTPUT_DIR / "anomaly_model.pkl"
     model_path.parent.mkdir(exist_ok=True)
     joblib.dump(model, model_path)
     print(f"Model saved to: {model_path}")
 
-    # Save results
-    results_path = OUTPUT_DIR / "anomaly_results.xlsx"
-    results.to_excel(results_path, index=False)
-    print(f"Results saved to: {results_path}")
-
-    return results, model
+    return model
