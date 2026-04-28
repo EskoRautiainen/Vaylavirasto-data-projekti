@@ -215,8 +215,14 @@ __marimo__/
 # Allow only model and metadata files, ignore results
 MLfiles/anomaly_results.xlsx
 
-#Ignores everything inside Data folder but keeps the folder itself
+#Ignores everything inside Data folder and output folder but keeps the folder itself
 Data/*
 !Data/
 !Data/.gitkeep
+
+output/*
+!output/
+!output/.gitkeep
+
+
 jatkokehitys.md
