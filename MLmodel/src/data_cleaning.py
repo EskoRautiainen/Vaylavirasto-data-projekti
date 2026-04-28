@@ -3,6 +3,9 @@ from __future__ import annotations
 import pandas as pd
 
 
+# -------------------------
+# INDEX SUMMARY FORMATTING
+# -------------------------
 def _format_index_summary(indices: list[int], sample_size: int = 20) -> str:
     if not indices:
         return "none"
@@ -12,6 +15,9 @@ def _format_index_summary(indices: list[int], sample_size: int = 20) -> str:
     return f"[{preview}, ...] (total: {len(indices)})"
 
 
+# -------------------------
+# DATA CLEANING
+# -------------------------
 def step_02_clean_data(dataframe: pd.DataFrame) -> pd.DataFrame:
     # Check if input is a pandas DataFrame
     if not isinstance(dataframe, pd.DataFrame):

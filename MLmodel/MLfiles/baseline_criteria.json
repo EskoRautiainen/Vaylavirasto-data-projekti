@@ -1,13 +1,20 @@
 {
-  "baseline_quantile": 0.4,
-  "min_features_required": 2,
+  "baseline_quantile": null,
+  "min_features_required": 3,
   "criteria": {
-    "vertical_acceleration": 0.11,
-    "lateral_acceleration": 3.0,
-    "longitudinal_acceleration": 6.0
+    "pys_kiiht": 0.08,
+    "siv_kiiht": 2.0,
+    "nyo_kiiht": 4.0
   },
+  "criteria_mode": "absolute",
   "original_rows": 1042431,
+<<<<<<< HEAD
+  "filtered_rows": 153746,
+  "retention_rate": 0.14748793924969614,
+  "generated_at": "2026-04-22T09:32:27.709022"
+=======
   "filtered_rows": 501988,
   "retention_rate": 0.4815551341047993,
   "generated_at": "2026-04-13T11:51:31.237105"
+>>>>>>> 8fc2a10a40dc79524b7b4e0be093f08d8aaba90b
 }

@@ -9,6 +9,9 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 OUTPUT_DIR = REPO_ROOT / "MLmodel" / "MLfiles"
 
 
+# -------------------------
+# FEATURE ENGINEERING
+# -------------------------
 def step_03_engineer_features(dataframe: pd.DataFrame) -> pd.DataFrame:
     # Check if input is a pandas DataFrame
     if not isinstance(dataframe, pd.DataFrame):
@@ -17,32 +20,22 @@ def step_03_engineer_features(dataframe: pd.DataFrame) -> pd.DataFrame:
         )
 
     selected_features = [
-        "vertical_acceleration",
-        "lateral_acceleration",
-        "longitudinal_acceleration",
+        "pys_kiiht",
+        "siv_kiiht",
+        "nyo_kiiht",
     ]
 
-    # Map Finnish column names to English
-    column_mapping = {
-        "pys_kiiht": "vertical_acceleration",
-        "siv_kiiht": "lateral_acceleration",
-        "nyo_kiiht": "longitudinal_acceleration",
-    }
-
-    # Create mapped dataframe
-    mapped_dataframe = dataframe.rename(columns=column_mapping)
-
-    # Check if required columns exist in the mapped dataframe
+    # Check if required columns exist in the dataframe
     missing_features = [
-        col for col in selected_features if col not in mapped_dataframe.columns
+        col for col in selected_features if col not in dataframe.columns
     ]
     if missing_features:
         raise ValueError(
             f"Required features are missing: {missing_features}. "
-            f"Available columns: {list(mapped_dataframe.columns)}"
+            f"Available columns: {list(dataframe.columns)}"
         )
 
-    engineered_dataframe = mapped_dataframe.loc[:, selected_features].copy()
+    engineered_dataframe = dataframe.loc[:, selected_features].copy()
 
     # Print preview of engineered features
     print()
@@ -59,7 +52,6 @@ def step_03_engineer_features(dataframe: pd.DataFrame) -> pd.DataFrame:
         "feature_count": len(selected_features),
         "data_rows": len(engineered_dataframe),
         "feature_engineering_date": pd.Timestamp.now().isoformat(),
-        "description": "Road condition acceleration measurements for anomaly detection",
     }
 
     # Create output directory if it doesn't exist

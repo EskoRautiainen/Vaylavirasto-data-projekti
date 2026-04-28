@@ -10,18 +10,26 @@ OUTPUT_DIR = REPO_ROOT / "MLmodel" / "MLfiles"
 
 
 REQUIRED_COLUMNS = [
-    "vertical_acceleration",
-    "lateral_acceleration",
-    "longitudinal_acceleration",
+    "pys_kiiht",
+    "siv_kiiht",
+    "nyo_kiiht",
 ]
 
 FEATURE_LABELS = {
-    "vertical_acceleration": "Pystykiihtyvyys",
-    "lateral_acceleration": "Sivuttaiskiihtyvyys",
-    "longitudinal_acceleration": "Pitkittaiskiihtyvyys",
+    "pys_kiiht": "Vertical acceleration",
+    "siv_kiiht": "Lateral acceleration",
+    "nyo_kiiht": "Longitudinal acceleration",
+}
+ABSOLUTE_DEFAULT_CRITERIA = {
+    "pys_kiiht": 0.08,
+    "siv_kiiht": 2.0,
+    "nyo_kiiht": 4.0,
 }
 
 
+# -------------------------
+# DYNAMIC CRITERIA COMPUTATION
+# -------------------------
 def _compute_dynamic_criteria(
     dataframe: pd.DataFrame, required_columns: list[str], baseline_quantile: float
 ) -> dict[str, float]:
@@ -31,17 +39,22 @@ def _compute_dynamic_criteria(
     return criteria
 
 
+# -------------------------
+# BASELINE METADATA SAVING
+# -------------------------
 def _save_baseline_metadata(
     criteria: dict[str, float],
-    baseline_quantile: float,
+    baseline_quantile: float | None,
     min_features_required: int,
     original_rows: int,
     filtered_rows: int,
+    criteria_mode: str,
 ) -> None:
     metadata = {
         "baseline_quantile": baseline_quantile,
         "min_features_required": min_features_required,
         "criteria": criteria,
+        "criteria_mode": criteria_mode,
         "original_rows": original_rows,
         "filtered_rows": filtered_rows,
         "retention_rate": (filtered_rows / original_rows) if original_rows else 0.0,
@@ -54,10 +67,14 @@ def _save_baseline_metadata(
     print(f"Baseline criteria saved to: {output_path}")
 
 
+# -------------------------
+# GOOD ROAD FILTERING
+# -------------------------
 def step_04_filter_good_road(
     dataframe: pd.DataFrame,
-    baseline_quantile: float = 0.40,
-    min_features_required: int = 2,
+    baseline_quantile: float = 0.25,
+    min_features_required: int = 3,
+    absolute_criteria: dict[str, float] | None = None,
 ) -> pd.DataFrame:
     """
     Filters the dataframe to retain only road segments that represent good road surface conditions.
@@ -111,8 +128,19 @@ def step_04_filter_good_road(
     # Calculate filtering statistics before filtering for accurate reporting
     original_rows = len(dataframe)
 
-    # Compute dynamic filtering criteria from current data
-    criteria = _compute_dynamic_criteria(dataframe, required_columns, baseline_quantile)
+    criteria_mode = "dynamic"
+    if absolute_criteria is not None:
+        missing_criteria = [col for col in required_columns if col not in absolute_criteria]
+        if missing_criteria:
+            raise ValueError(
+                "absolute_criteria is missing required keys: "
+                f"{missing_criteria}"
+            )
+        criteria = {col: float(absolute_criteria[col]) for col in required_columns}
+        criteria_mode = "absolute"
+    else:
+        # Compute dynamic filtering criteria from current data
+        criteria = _compute_dynamic_criteria(dataframe, required_columns, baseline_quantile)
 
     # Apply filtering: keep rows that satisfy at least min_features_required criteria.
     # This is more robust when no external reference set exists.
@@ -135,14 +163,17 @@ def step_04_filter_good_road(
     print("------------------------------------------------------------")
     print("Good road filtering applied.")
     print()
-    percentile_text = int(baseline_quantile * 100)
+    if criteria_mode == "absolute":
+        print("Good-road selection thresholds (fixed absolute thresholds):")
+    else:
+        percentile_text = int(baseline_quantile * 100)
+        print(
+            "Good-road selection thresholds "
+            f"(computed from current data, lower bound at the {percentile_text}th percentile):"
+        )
     print(
-        "Hyvan tien valintarajat "
-        f"(laskettu nykyisesta datasta, alaraja datan jakauman {percentile_text}. persentiilista):"
-    )
-    print(
-        f"Valintasaanto: vahintaan {min_features_required}/{len(required_columns)} "
-        "piirrettta oltava raja-arvon alapuolella."
+        f"Selection rule: at least {min_features_required}/{len(required_columns)} "
+        "features must be at or below their threshold."
     )
     for column, threshold in criteria.items():
         label = FEATURE_LABELS.get(column, column)
@@ -167,10 +198,11 @@ def step_04_filter_good_road(
 
     _save_baseline_metadata(
         criteria,
-        baseline_quantile,
+        baseline_quantile if criteria_mode == "dynamic" else None,
         min_features_required,
         original_rows,
         filtered_rows,
+        criteria_mode,
     )
 
     return filtered_dataframe

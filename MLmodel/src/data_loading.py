@@ -14,6 +14,9 @@ OUTPUT_COLUMNS = [
 ]
 
 
+# -------------------------
+# EXCEL FILE DISCOVERY
+# -------------------------
 def _discover_excel_files(anchor_path: Path) -> list[Path]:
     if anchor_path.exists() and anchor_path.is_dir():
         data_dir = anchor_path
@@ -37,6 +40,9 @@ def _discover_excel_files(anchor_path: Path) -> list[Path]:
     return excel_files
 
 
+# -------------------------
+# COLUMN NAME NORMALIZATION
+# -------------------------
 def _column_map(columns: pd.Index) -> dict[str, str]:
     mapped: dict[str, str] = {}
     for col in columns:
@@ -45,6 +51,9 @@ def _column_map(columns: pd.Index) -> dict[str, str]:
     return mapped
 
 
+# -------------------------
+# REQUIRED FEATURE RESOLUTION
+# -------------------------
 def _resolve_feature_columns(dataframe: pd.DataFrame) -> dict[str, str]:
     cols = _column_map(dataframe.columns)
     resolved = {
@@ -59,15 +68,24 @@ def _resolve_feature_columns(dataframe: pd.DataFrame) -> dict[str, str]:
     return resolved  # type: ignore[return-value]
 
 
-def _read_matching_sheet(file_path: Path) -> tuple[pd.DataFrame, str, int]:
+# -------------------------
+# MATCHING SHEET READING
+# -------------------------
+def _read_matching_sheets(file_path: Path) -> list[tuple[pd.DataFrame, str, int]]:
     with pd.ExcelFile(file_path) as excel_file:
         sheet_names = excel_file.sheet_names
 
     # Process every worksheet and detect required columns dynamically.
     # Do not rely on worksheet names because source files may vary.
+    matches: list[tuple[pd.DataFrame, str, int]] = []
     for sheet_name in sheet_names:
         for header_row in (0, 1):
-            dataframe = pd.read_excel(file_path, sheet_name=sheet_name, header=header_row)
+            try:
+                dataframe = pd.read_excel(
+                    file_path, sheet_name=sheet_name, header=header_row
+                )
+            except Exception:
+                continue
             if dataframe.empty:
                 continue
             resolved = _resolve_feature_columns(dataframe)
@@ -83,14 +101,21 @@ def _read_matching_sheet(file_path: Path) -> tuple[pd.DataFrame, str, int]:
                     ],
                 ].copy()
                 filtered.columns = OUTPUT_COLUMNS + ["pituus"]
-                return filtered, sheet_name, header_row
+                matches.append((filtered, sheet_name, header_row))
+                break
 
-    raise ValueError(
-        f"No worksheet with required columns found in file: {file_path.name}. "
-        "Required columns: pys_kiiht, siv_kiiht, nyo_kiiht, yhd_kiiht, pituus"
-    )
+    if not matches:
+        raise ValueError(
+            f"No worksheet with required columns found in file: {file_path.name}. "
+            "Required columns: pys_kiiht, siv_kiiht, nyo_kiiht, yhd_kiiht, pituus"
+        )
+
+    return matches
 
 
+# -------------------------
+# PITUUS FILTERING
+# -------------------------
 def _filter_pituus_10(dataframe: pd.DataFrame) -> pd.DataFrame:
     pituus_numeric = pd.to_numeric(
         dataframe["pituus"].astype(str).str.replace(",", ".", regex=False),
@@ -99,6 +124,9 @@ def _filter_pituus_10(dataframe: pd.DataFrame) -> pd.DataFrame:
     return dataframe.loc[pituus_numeric == 10, OUTPUT_COLUMNS].copy()
 
 
+# -------------------------
+# DATA LOADING
+# -------------------------
 def step_01_load_data(file_path: Path) -> pd.DataFrame:
     validated_path = Path(file_path)
     excel_files = _discover_excel_files(validated_path)
@@ -110,17 +138,23 @@ def step_01_load_data(file_path: Path) -> pd.DataFrame:
     total_rows_picked = 0
 
     for excel_file in excel_files:
-        source_dataframe, sheet_name, _ = _read_matching_sheet(excel_file)
-        filtered_source = _filter_pituus_10(source_dataframe)
-        rows_picked = len(filtered_source)
-        total_rows_picked += rows_picked
+        sheet_matches = _read_matching_sheets(excel_file)
+        file_rows_picked = 0
+        included_sheet_names: list[str] = []
 
+        for source_dataframe, sheet_name, _ in sheet_matches:
+            filtered_source = _filter_pituus_10(source_dataframe)
+            rows_picked = len(filtered_source)
+            if rows_picked > 0:
+                filtered_frames.append(filtered_source)
+                file_rows_picked += rows_picked
+                included_sheet_names.append(sheet_name)
+
+        total_rows_picked += file_rows_picked
+        sheets_display = ", ".join(sorted(set(included_sheet_names))) if included_sheet_names else "none"
         print(
-            f"{excel_file.name} | sheet name: {sheet_name} | rows_picked: {rows_picked}"
+            f"{excel_file.name} | sheets_included: {sheets_display} | rows_picked: {file_rows_picked}"
         )
-
-        if rows_picked > 0:
-            filtered_frames.append(filtered_source)
 
     if not filtered_frames:
         raise ValueError(
