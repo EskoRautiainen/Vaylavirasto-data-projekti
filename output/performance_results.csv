@@ -1,3 +1,0 @@
-timestamp,note,gpkg_file,html_file,gpkg_size_mb,html_size_mb,gpkg_read_time_s,feature_count,total_vertices_optimized,avg_vertices_per_feature_optimized,max_vertices_in_feature_optimized,total_vertices,avg_vertices_per_feature,max_vertices_in_feature,column_count,unique_tie_count,unique_kaista_count,unique_ajorata_count
-2026-04-13T13:19:27,simplify 5m,road_condition.gpkg,road_condition_map.html,35.12,46.54,0.6032,67914,229922,3.39,23,774589,11.41,188,17,448,7,3
-2026-04-14T22:50:06,simplify 2m,road_condition.gpkg,road_condition_map.html,35.12,44.27,0.6545,67914,229922,3.39,23,774589,11.41,188,17,448,7,3
