@@ -4,8 +4,6 @@ import sys
 import time
 import os
 
-#NOTE: check single lane road lane seperation per direction, and if it is possible to split them into separate features
-
 # --------------------------------------------------
 # SETTINGS AND TOGGLES
 # --------------------------------------------------
