@@ -52,7 +52,7 @@ def _discover_excel_files(anchor_path: Path) -> list[Path]: # Find ALL Excel fil
         and not path.name.startswith("~$")                  # Ignores Excel temporary lock files
     )
     if not excel_files:
-        raise FileNotFoundError(f"No Excel files found in directory: {data_dir}")  # If no Excels found -> crash
+        raise FileNotFoundError(f"No Excel files found in directory: {data_dir}")  # If no Excels found, raise error
     return excel_files                                      # Return list of Excel files
 
 

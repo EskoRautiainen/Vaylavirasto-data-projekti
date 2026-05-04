@@ -4,21 +4,18 @@ import pandas as pd
 #   CATEGORIZATION
 # ----------------------------------------------------------------------------------------------------
 def categorize(scores):
+    s = pd.Series(scores)
     categories = []
 
-    for s in scores: # Categorize anomaly scores
-        if s <= -0.15:
-            categories.append('Critical') 
-        elif s <= -0.08:
-            categories.append('Poor')
-        elif s <= -0.03:
-            categories.append('Fair')
-        elif s <= 0.02:
-            categories.append('Good')
-        else:
-            categories.append('Excellent')
+    s = pd.Series(scores)
 
-    return categories
+    percentile = s.rank(pct=True)
+
+    return pd.cut(
+        percentile,
+        bins=[0, 0.04, 0.08, 0.4, 0.8, 1.0],            
+        labels=["Critical", "Poor", "Fair", "Good", "Excellent"]
+    )
 
 
 # ----------------------------------------------------------------------------------------------------
@@ -30,7 +27,7 @@ def step_06_build_results(metadata, features, predictions, scores):
     result = result.join(features)
 
     result['anomaly_prediction'] = predictions
-    result['anomaly_score'] = scores
+    result['anomaly_score'] = scores.round(1)
     result['anomaly_type'] = [
         'Normal' if p == 1 else 'Anomaly' for p in predictions
     ]

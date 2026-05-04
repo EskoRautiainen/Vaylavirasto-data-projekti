@@ -1,7 +1,6 @@
 import pandas as pd
 import sys
 import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from pathlib import Path
 
 from MLproduction.src.data_loading                      import step_01_load_data
@@ -38,7 +37,8 @@ selected_features = [
     'kaltevuus',
     'rms_mega_oik',
     'delta',
-    'yhd_kiiht',
+    'yhd_kiiht',    # Metadata = df[selected_features] contains yhd_kiiht,
+                    # while df = step_01_load_data(file_path) contains yhd_kiiht, pys_kiiht, siv_kiiht, nyo_kiiht.
     'tl332_paapak'
     ]
 
@@ -94,10 +94,10 @@ def run_pipeline():
     except Exception as e:
         raise RuntimeError(f"Production (prediction) failed: {e}") from e 
 
-        print("metadata_cleaned:", len(metadata_cleaned))
-        print("engineered:", len(engineered_features))
-        print("predictions:", len(predictions))
-        print("scores:", len(scores))
+    print("metadata_cleaned:", len(metadata_cleaned))
+    print("engineered:", len(engineered_features))
+    print("predictions:", len(predictions))
+    print("scores:", len(scores))
 
 # BUILD RESULTS
     try:
