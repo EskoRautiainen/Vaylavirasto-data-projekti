@@ -1,8 +1,13 @@
 from __future__ import annotations
 
 import argparse
+import sys
 import pandas as pd
 from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 from src.data_cleaning import step_02_clean_data
 from src.feature_engineering import step_03_engineer_features
@@ -13,7 +18,6 @@ from src.model_training import step_06_model_training
 from src.model_testing import step_07_model_testing
 
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DATA_DIR = REPO_ROOT / "Data"
 SUPPORTED_EXCEL_SUFFIXES = {".xlsx", ".xlsm"}
 # Baseline calibration constants

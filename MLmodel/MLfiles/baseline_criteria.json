@@ -8,13 +8,7 @@
   },
   "criteria_mode": "absolute",
   "original_rows": 1042431,
-<<<<<<< HEAD
   "filtered_rows": 153746,
   "retention_rate": 0.14748793924969614,
-  "generated_at": "2026-04-22T09:32:27.709022"
-=======
-  "filtered_rows": 501988,
-  "retention_rate": 0.4815551341047993,
-  "generated_at": "2026-04-13T11:51:31.237105"
->>>>>>> 8fc2a10a40dc79524b7b4e0be093f08d8aaba90b
+  "generated_at": "2026-05-05T11:35:55.521061"
 }
