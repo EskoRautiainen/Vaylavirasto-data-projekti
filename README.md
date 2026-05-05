@@ -30,7 +30,7 @@ Not accepting outside contributions during development.
 ## Authors and acknowledgment
 
 Programmers:
-- Esko Rautiainen - [Github](LINK)
+- Esko Rautiainen - [Github](https://github.com/EskoRautiainen)
 - Aleksi Malminen - [Github](https://github.com/AleksiMal)
 - Kimmo Vuori - [Github](LINK)
 - Eeli Kemppainen
