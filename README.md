@@ -9,7 +9,19 @@ To be updated...
 
 ## Usage
 
-To be updated..
+### Required files
+1. Digiroad for the whole of finland (Geopackage R)
+2. Excel files with road condition data
+
+Digiroad file can be downloaded from [here](https://aineistot.vayla.fi/spa/ava/Tie/Digiroad/Aineistojulkaisut/latest/) <br>
+Digiroad file needs to be extracted into [Root] -> [Data] -> [Digiroad] <br>
+<br>
+Excel file(s) need to be put into [Root] -> [????] -> [????] <br>
+<br>
+When these steps are done, the code will do the rest and automatically search for the files and output the end result into <br>
+[Root] -> [output] <br>
+
+
 
 ## Contributing
 
@@ -17,11 +29,16 @@ Not accepting outside contributions during development.
 
 ## Authors and acknowledgment
 
-- Esko Rautiainen
-- Aleksi Malminen
-- Kimmo Vuori
+Programmers:
+- Esko Rautiainen - [Github](https://github.com/EskoRautiainen)
+- Aleksi Malminen - [Github](https://github.com/AleksiMal)
+- Kimmo Vuori - [Github](LINK)
 - Eeli Kemppainen
 
 Supporting us are our teachers:
 - Anne-Mari Stenbacka
 - Jere Käpyaho
+
+Project provided by:
+- [Tampere University of Applied Sciences](https://www.tuni.fi/fi/tutustu-meihin/tamk)
+- [Väylävirasto](https://vayla.fi/etusivu)
