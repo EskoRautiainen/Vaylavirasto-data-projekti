@@ -33,7 +33,7 @@ Programmers:
 - Esko Rautiainen - [Github](LINK)
 - Aleksi Malminen - [Github](https://github.com/AleksiMal)
 - Kimmo Vuori - [Github](LINK)
-- Eeli Kemppainen - [Github](LINK)
+- Eeli Kemppainen
 
 Supporting us are our teachers:
 - Anne-Mari Stenbacka
