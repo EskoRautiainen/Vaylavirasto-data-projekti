@@ -1,5 +1,4 @@
 import joblib
-import sys
 from pathlib import Path
 from shared.baseline_model import BaselineDistanceModel
 
