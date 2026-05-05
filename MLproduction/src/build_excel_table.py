@@ -11,9 +11,9 @@ def step_07_excel_colours(feature_df, output_path="./MLproduction/production_res
     denominator = feature_df["yhd_kiiht"].replace(0, 0.05)
 
     # Calculate ratios. See, which type of acceleration is most dominant.
-    feature_df["Pysty_vs_yhdistetty"] = (feature_df["pys_kiiht"] / denominator).round(3)
-    feature_df["Sivu_vs_yhdistetty"] = (feature_df["siv_kiiht"] / denominator).round(3)
-    feature_df["Nyökkimis_vs_yhdistetty"] = (feature_df["nyo_kiiht"] / denominator).round(3)
+    feature_df["pysty_vs_yhdistetty"] = (feature_df["pys_kiiht"] / denominator).round(3)
+    feature_df["sivu_vs_yhdistetty"] = (feature_df["siv_kiiht"] / denominator).round(3)
+    feature_df["nyökkimis_vs_yhdistetty"] = (feature_df["nyo_kiiht"] / denominator).round(3)
 
     # Move 'yhd_kiiht' column to the rightmost position
     cols = list(feature_df.columns)
@@ -33,7 +33,7 @@ def step_07_excel_colours(feature_df, output_path="./MLproduction/production_res
         worksheet = writer.sheets["Data"]
 
         last_row = len(feature_df)  # number of rows
-        vs_columns = ["Pysty_vs_yhdistetty", "Sivu_vs_yhdistetty", "Nyökkimis_vs_yhdistetty"]
+        vs_columns = ["pysty_vs_yhdistetty", "sivu_vs_yhdistetty", "nyökkimis_vs_yhdistetty"]
         ride_columns = ["vertical_acceleration", "lateral_acceleration", "longitudinal_acceleration"]
 
         for col_name in vs_columns:
@@ -79,7 +79,7 @@ def step_07_excel_colours(feature_df, output_path="./MLproduction/production_res
 
         # Add blue fill to specific columns for readability
         blue_fill = workbook.add_format({'bg_color': '#ADD8E6'})  # light blue
-        for col_name in ['ura_max', 'harjanne_ka', 'kaltevuus', 'rms_mega_oik', 'delta', 'tl332_paapak']:
+        for col_name in ['ura_max', 'harjanne_ka', 'kaltevuus', 'rms_mega_oik', 'delta', 'tl332_paapak', 'anomaly_score']:
             if col_name in feature_df.columns:
                 col_idx = feature_df.columns.get_loc(col_name)
                 # Apply solid fill from row 1 (first data row) to last_row
