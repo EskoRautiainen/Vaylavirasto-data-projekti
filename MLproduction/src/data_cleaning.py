@@ -59,7 +59,7 @@ def step_02_clean_data(dataframe: pd.DataFrame) -> pd.DataFrame:
     rows_with_negative_values = dataframe_with_numeric_only.index[
         (dataframe_with_numeric_only < 0).any(axis=1)
     ].tolist()
-    cleaned_dataframe = dataframe_with_numeric_only.drop(index=rows_with_negative_values).reset_index(drop=True)
+    cleaned_dataframe = dataframe_with_numeric_only.drop(index=rows_with_negative_values)
     
     # Calculate statistics
     original_rows = len(dataframe)
