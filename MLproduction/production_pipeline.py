@@ -2,10 +2,9 @@ import pandas as pd
 import sys
 import os
 from pathlib import Path
-
 from MLproduction.src.data_loading                      import step_01_load_data
-from MLmodel.src.data_cleaning                          import step_02_clean_data
-from MLmodel.src.feature_engineering                    import step_03_engineer_features
+from MLproduction.src.data_cleaning                     import step_02_clean_data
+from MLproduction.src.feature_engineering               import step_03_engineer_features
 from MLproduction.src.load_model_and_start_production   import step_04_load_artifacts
 from MLproduction.src.load_model_and_start_production   import step_05_run_production
 from MLproduction.src.build_results                     import step_06_build_results
