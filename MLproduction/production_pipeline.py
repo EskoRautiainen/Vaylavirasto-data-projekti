@@ -1,6 +1,3 @@
-import pandas as pd
-import sys
-import os
 from pathlib import Path
 from MLproduction.src.data_loading                      import step_01_load_data
 from MLproduction.src.data_cleaning                     import step_02_clean_data
@@ -116,5 +113,4 @@ def run_pipeline():
 #   ENTRY POINT
 # ----------------------------------------------------------------------------------------------------
 if __name__ == "__main__":
-    import sys
     run_pipeline()
