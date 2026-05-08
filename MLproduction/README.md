@@ -53,7 +53,7 @@ The virtual environment ensures that all dependencies are isolated and consisten
 Run the program from the `Vaylavirasto-data-projekti` directory:
 
 ```bash
-python MLproduction/production_pipeline.py
+python -m MLproduction.production_pipeline
 ```
 
 The input must be an Excel file name with the extension `.xlsx` or `.xlsm`.
