@@ -18,7 +18,7 @@ from src.model_training import step_06_model_training
 from src.model_testing import step_07_model_testing
 
 
-DEFAULT_DATA_DIR = REPO_ROOT / "Data"
+DEFAULT_DATA_DIR = REPO_ROOT / "SourceData"
 SUPPORTED_EXCEL_SUFFIXES = {".xlsx", ".xlsm"}
 # Baseline calibration constants
 MIN_FEATURES_REQUIRED = 3
@@ -72,7 +72,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Loads Excel data for ML pipeline. "
-            "By default reads from repository Data directory."
+            "By default reads from repository SourceData directory."
         )
     )
     parser.add_argument(
