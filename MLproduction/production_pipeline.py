@@ -12,7 +12,7 @@ from MLproduction.src.build_excel_table                 import step_07_excel_col
 # ----------------------------------------------------------------------------------------------------
 # FILE PATH
 REPO_ROOT = Path(__file__).resolve().parent.parent
-file_path = REPO_ROOT / "Data"
+file_path = REPO_ROOT / "SourceData"
 output_path = REPO_ROOT / "MLproduction" / "MLfiles" / "production_results_coloured.xlsx"
 
 # SELECTED FEATURES
