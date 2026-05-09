@@ -13,7 +13,7 @@ from MLproduction.src.build_excel_table                 import step_07_excel_col
 # FILE PATH
 REPO_ROOT = Path(__file__).resolve().parent.parent
 file_path = REPO_ROOT / "SourceData"
-output_path = REPO_ROOT / "MLproduction" / "MLfiles" / "production_results_coloured.xlsx"
+output_path = REPO_ROOT / "output" / "production_results_coloured.xlsx"
 
 # SELECTED FEATURES
 selected_features = [
@@ -58,7 +58,7 @@ def run_pipeline():
 # LOAD DATA
     print()
     print()
-    print("Starting production pipeline...")
+    print("=== Production Pipeline Started ===")
     try:
         df = step_01_load_data(file_path)
     except Exception as e:
@@ -124,7 +124,10 @@ def run_pipeline():
     except Exception as e:
         raise RuntimeError(f"Excel formatting and saving failed: {e}") from e
     print(f"Colours added successfully to {output_path}!")
-    print("Production pipeline complete. Don't open created Excel file, before (venv) appears")
+    print("Don't open created Excel file during production...")
+    print()
+    print("=== Production Pipeline Finished ===")
+    print()
 
 
 # ----------------------------------------------------------------------------------------------------
