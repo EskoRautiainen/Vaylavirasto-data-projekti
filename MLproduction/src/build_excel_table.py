@@ -11,6 +11,7 @@ def step_07_excel_colours(feature_df, output_path="./MLproduction/production_res
     denominator = feature_df["yhd_kiiht"].replace(0, 0.05)
 
     # Calculate ratios. See, which type of acceleration is most dominant.
+    feature_df = feature_df.copy() # Prevents mutating original dataframe.
     feature_df["pysty_vs_yhdistetty"] = (feature_df["pys_kiiht"] / denominator).round(3)
     feature_df["sivu_vs_yhdistetty"] = (feature_df["siv_kiiht"] / denominator).round(3)
     feature_df["nyökkimis_vs_yhdistetty"] = (feature_df["nyo_kiiht"] / denominator).round(3)
