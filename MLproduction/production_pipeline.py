@@ -54,7 +54,11 @@ def run_pipeline():
     7. Export formatted Excel file
     """
 
+
 # LOAD DATA
+    print()
+    print()
+    print("Starting production pipeline...")
     try:
         df = step_01_load_data(file_path)
     except Exception as e:
@@ -90,6 +94,11 @@ def run_pipeline():
     except Exception as e:
         raise RuntimeError(f"Production (prediction) failed: {e}") from e 
 
+    # Print the amount of scaled features, model preditions and scores
+    print()
+    print("------------------------------------------------------------")
+    print("Scaled features, predictions and scores.")
+    print()
     print("metadata_cleaned:", len(metadata_cleaned))
     print("engineered:", len(engineered_features))
     print("predictions:", len(predictions))
@@ -97,16 +106,25 @@ def run_pipeline():
 
 # BUILD RESULTS
     try:
+        print()
+        print("------------------------------------------------------------")
+        print("Building results.")
+        print()
         results = step_06_build_results(metadata_cleaned, engineered_features, predictions, scores) # Build and categorize results
     except Exception as e:
         raise RuntimeError(f"Building results failed: {e}") from e
 
 # CUSTOMISE EXCEL AND SAVE RESULTS
     try:
+        print()
+        print("------------------------------------------------------------")
+        print("Building Excel and saving results.")
+        print()
         step_07_excel_colours(results, output_path) # Save colour-coded results to Excel
     except Exception as e:
         raise RuntimeError(f"Excel formatting and saving failed: {e}") from e
-    print("Production complete.")
+    print(f"Colours added successfully to {output_path}!")
+    print("Production pipeline complete. Don't open created Excel file, before (venv) appears")
 
 
 # ----------------------------------------------------------------------------------------------------

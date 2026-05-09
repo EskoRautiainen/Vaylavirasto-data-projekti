@@ -88,5 +88,3 @@ def step_07_excel_colours(feature_df, output_path="./MLproduction/production_res
                     'type': 'no_blanks',
                     'format': blue_fill
                 })
-
-        print(f"Colours added successfully to {output_path}!")
