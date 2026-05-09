@@ -12,6 +12,8 @@ The pipeline is inference-only:
 - A previously trained model and scaler are loaded from disk
 - Predictions and anomaly scores are generated for incoming production data
 
+Output Excel-file is saved to **/output**
+
 ## How to run?
 
 ### Creating and activating virtual environment
@@ -27,7 +29,7 @@ source venv/Scripts/activate
 # Install dependencies
 pip install -r MLmodel/requirements.txt
 
-# Run the pipeline
+# Run the production pipeline
 python -m MLproduction.production_pipeline
 ```
 
@@ -47,7 +49,7 @@ source venv/bin/activate
 # Install dependencies
 pip install -r MLmodel/requirements.txt
 
-# Run the pipeline
+# Run the production pipeline
 python -m MLproduction.production_pipeline
 ```
 
@@ -107,6 +109,18 @@ MLmodel/
 ### Purpose
 Reads Excel measurement files and extracts valid source data.
 
+### Parameters
+- User does not give additional parameters → use /SourceData folder.
+- User gives folder in parameters: → use it.​
+- User gives a file name in parameters:​ → use its parent-folder.
+
+### Example
+```bash
+python -m MLproduction.production_pipeline
+python -m MLproduction.production_pipeline Data2027
+python -m MLproduction.production_pipeline tiet-2-3-9.xlsx
+```
+
 ### Responsibilities
 - Discover .xlsx and .xlsm files
 - Ignore temporary Excel lock files (~$)
@@ -115,7 +129,7 @@ Reads Excel measurement files and extracts valid source data.
 - Normalize column naming
 
 Filter rows where:
-pituus == 10
+**pituus** is > 10
 
 ### Required Columns
 - pys_kiiht
@@ -125,6 +139,9 @@ pituus == 10
 - pituus
 
 Returns a combined pandas DataFrame containing all valid rows across all source files.
+
+### Console feedback
+Log in console how many rows where dropped from each loaded file.
 
 ## Step 2 — Data Cleaning
 ### Purpose
@@ -145,9 +162,15 @@ Removes rows containing negative acceleration values.
 ### Output
 A cleaned DataFrame suitable for ML inference.
 
-## Step 3 — Feature Selection
+### Console feedback
+Log in console how many rows were removed during each phase.
+
+
+## Step 3 — Feature Engineering
 ### Purpose
-Select model-required acceleration features.
+- Prepare features for machine learning
+- Save relevevant info to MLmodel/Mlfiles/feature.metadata.json. 
+- feature_metadata.json may help with troubleshooting.
 
 ### Selected Features
 pys_kiiht
@@ -158,6 +181,9 @@ nyo_kiiht
 No feature transformation currently occurs.
 This stage performs feature selection only.
 
+### Console feedback
+Log in console 5 example rows of data
+
 ## Step 4 — Model Loading
 ### Purpose
 Load previously trained ML artifacts.
@@ -165,12 +191,23 @@ Load previously trained ML artifacts.
 ### Loaded Files
 anomaly_model.pkl
 scaler.pkl
-Notes
 
+### anomaly_model.pkl
+- Model is taught on "good" road data.
+- Contains anomaly scoring logic.
+- Without it, no predictions can be made.
+
+### scaler.pkl
+- Transforms data into the same scale used during training.
+- Without it, model assumption breaks and results become unstable.
+
+### Notes
 The scaler **must match**:
 - feature order
 - feature count
 - training preprocessing
+
+
 
 ## Step 5 — Production Inference
 ### Purpose
@@ -190,6 +227,13 @@ Field --- Description
 - predictions         1 = normal, -1 = anomaly
 - scores	            anomaly confidence score
 
+### Console feedback
+Log in console the amount of rows in the following variables:
+- metadata_cleaned
+- engineered
+- scored
+Allows user to confirm that no data was lost during pipeline steps.
+
 ## Step 6 — Result Assembly
 ### Purpose
 Combine metadata, ML outputs, and prioritization.
@@ -203,7 +247,7 @@ Column --- Description
 - priority_score	        Numeric urgency
 
 
-**Categorization**
+### Categorization
 Current implementation uses percentile-based ranking.
 
 Percentile --- Category
@@ -218,20 +262,28 @@ Percentile --- Category
 Export production-ready results workbook.
 
 ### Features
-Conditional Formatting
 Green → Yellow → Red scales
-Applied to acceleration ratios
-Applied to anomaly indicators
+Colour-coded formatting is applied to: 
+- Ride-values
+- Ride-ratios
+
+Blue highlighting is applied to:
+- ura_max
+- harjanne_ka
+- kaltevuus
+- rms_mega_oik
+- delta
+- tl332_paapak
+- **anomaly_score**
 
 ### Ratio Columns
 pysty_vs_yhdistetty
 sivu_vs_yhdistetty
 nyökkimis_vs_yhdistetty
 
-### Highlighted Columns
-Selected metadata columns receive blue highlighting for readability.
 
-### Error Handling Strategy
+
+## Error Handling Strategy
 Each pipeline stage:
 
 - validates inputs
@@ -246,7 +298,7 @@ Metadata and ML features rely on shared row indices.
 
 ### Avoid:
 reset_index(drop=True)
-unless index synchronization is explicitly handled.
+unless index synchronization is explicitly handled or stable row ID's are added.
 
 ## Model Compatibility
 
@@ -259,20 +311,4 @@ The scaler and model must always match:
 
 
 ### Future Improvement Recommendations
-High Priority
-Add schema validation
-Add model versioning
-Add logging framework
-Add unit tests
-Add row-level unique identifiers
-Medium Priority
-Convert prints → structured logging
-Add configuration file
-Add CLI interface
-Add performance metrics
-Long-Term
-Model registry
-Drift detection
-Batch processing reports
-Automated retraining pipeline
 Add stable row ID's to dataframes. Merging different files can cause trouble in the future.
