@@ -82,6 +82,7 @@ Step --- Module --- Purpose
 
 
 ## Directory Structure
+```text
 MLproduction/
 ├── production_pipeline.py
 ├── src/
@@ -100,29 +101,28 @@ MLmodel/
 |
 |── output
 │   └── production_results_coloured.xlsx
-
+```
 
 ## Step 1 — Data Loading
 ### Purpose
 Reads Excel measurement files and extracts valid source data.
 
 ### Responsibilities
-Discover .xlsx and .xlsm files
-Ignore temporary Excel lock files (~$)
-Dynamically locate valid worksheets
-Validate required columns
-Normalize column naming
+- Discover .xlsx and .xlsm files
+- Ignore temporary Excel lock files (~$)
+- Dynamically locate valid worksheets
+- Validate required columns
+- Normalize column naming
 
 Filter rows where:
 pituus == 10
 
 ### Required Columns
-pys_kiiht
-siv_kiiht
-nyo_kiiht
-yhd_kiiht
-pituus
-Output
+- pys_kiiht
+- siv_kiiht
+- nyo_kiiht
+- yhd_kiiht
+- pituus
 
 Returns a combined pandas DataFrame containing all valid rows across all source files.
 
@@ -149,12 +149,12 @@ A cleaned DataFrame suitable for ML inference.
 ### Purpose
 Select model-required acceleration features.
 
-Selected Features
+### Selected Features
 pys_kiiht
 siv_kiiht
 nyo_kiiht
-Notes
 
+### Notes
 No feature transformation currently occurs.
 This stage performs feature selection only.
 
@@ -162,12 +162,12 @@ This stage performs feature selection only.
 ### Purpose
 Load previously trained ML artifacts.
 
-**Loaded Files**
+### Loaded Files
 anomaly_model.pkl
 scaler.pkl
 Notes
 
-The scaler must match:
+The scaler **must match**:
 - feature order
 - feature count
 - training preprocessing
@@ -176,62 +176,62 @@ The scaler must match:
 ### Purpose
 Generate anomaly predictions.
 
-**Processing**
+### Processing
 
-**Scaling**
+### Scaling
 scaled = scaler.transform(features)
 
-**Prediction**
+### Prediction
 predictions = model.predict(scaled)
 scores = model.decision_function(scaled)
 
-**Outputs**
+### Outputs
 Field --- Description
-predictions         1 = normal, -1 = anomaly
-scores	            anomaly confidence score
+- predictions         1 = normal, -1 = anomaly
+- scores	            anomaly confidence score
 
 ## Step 6 — Result Assembly
 ### Purpose
 Combine metadata, ML outputs, and prioritization.
 
-**Generated Fields**
+### Generated Fields
 Column --- Description
-anomaly_prediction	    Raw model output
-anomaly_score	        Rounded anomaly score
-anomaly_type	        Normal / Anomaly
-anomaly_category	    Priority category
-priority_score	        Numeric urgency
+- anomaly_prediction	    Raw model output
+- anomaly_score	            Rounded anomaly score
+- anomaly_type	            Normal / Anomaly
+- anomaly_category	        Priority category
+- priority_score	        Numeric urgency
 
 
 **Categorization**
 Current implementation uses percentile-based ranking.
 
-Percentile	Category
-0–4%	Critical
-4–8%	Poor
-8–40%	Fair
-40–80%	Good
-80–100%	Excellent
+Percentile --- Category
+- 0–4%	Critical
+- 4–8%	Poor
+- 8–40%	Fair
+- 40–80%	Good
+- 80–100%	Excellent
 
 ## Step 7 — Excel Export
 ### Purpose
 Export production-ready results workbook.
 
-**Features**
+### Features
 Conditional Formatting
 Green → Yellow → Red scales
 Applied to acceleration ratios
 Applied to anomaly indicators
 
-**Ratio Columns**
+### Ratio Columns
 pysty_vs_yhdistetty
 sivu_vs_yhdistetty
 nyökkimis_vs_yhdistetty
 
-**Highlighted Columns**
+### Highlighted Columns
 Selected metadata columns receive blue highlighting for readability.
 
-**Error Handling Strategy**
+### Error Handling Strategy
 Each pipeline stage:
 
 - validates inputs
@@ -244,7 +244,7 @@ This prevents silent corruption of production results.
 Index Integrity
 Metadata and ML features rely on shared row indices.
 
-**Avoid:**
+### Avoid:
 reset_index(drop=True)
 unless index synchronization is explicitly handled.
 
