@@ -147,6 +147,7 @@ siv_kiiht	    float	        m/s²	    Lateral acceleration
 nyo_kiiht	    float	        m/s²	    Longitudinal / pitch acceleration
 yhd_kiiht	    float	        m/s²	    Combined acceleration metric
 pituus	        int / float	    meters	    Segment length filter (must equal 10)
+```
 
 ### Console feedback
 Log in console how many rows where dropped from each loaded file.
