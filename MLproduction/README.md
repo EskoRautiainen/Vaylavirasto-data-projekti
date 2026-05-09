@@ -129,7 +129,7 @@ python -m MLproduction.production_pipeline tiet-2-3-9.xlsx
 - Normalize column naming
 
 Filter rows where:
-**pituus** is > 10
+**pituus** is less than 10
 
 ### Required Columns
 - pys_kiiht
