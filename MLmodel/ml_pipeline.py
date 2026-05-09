@@ -95,7 +95,7 @@ def main() -> None:
     args = parse_args()
     input_path = resolve_input_path(args.input_path)
     print()
-    print("=== ML Pipeline Started ===")
+    print("=== Training Pipeline Started ===")
     print()
     print("------------------------------------------------------------")
     
@@ -158,7 +158,7 @@ def main() -> None:
     print()
     print("------------------------------------------------------------")
     print()
-    print("=== ML Pipeline Finished ===")
+    print("=== Training Pipeline Finished ===")
     print()
 
 
