@@ -34,7 +34,7 @@ def step_07_excel_colours(feature_df, output_path="./MLproduction/production_res
 
         last_row = len(feature_df)  # number of rows
         vs_columns = ["pysty_vs_yhdistetty", "sivu_vs_yhdistetty", "nyökkimis_vs_yhdistetty"]
-        ride_columns = ["vertical_acceleration", "lateral_acceleration", "longitudinal_acceleration"]
+        ride_columns = ["pys_kiiht", "siv_kiiht", "nyo_kiiht"]
 
         for col_name in vs_columns:
             if col_name in feature_df.columns:
