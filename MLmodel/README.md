@@ -6,8 +6,8 @@ This folder contains the end-to-end ML pipeline for detecting road-condition ano
 
 Run from repository root (`Vaylavirasto-data-projekti`):
 
-```powershell
-.\.venv\Scripts\Activate.ps1
+```bash
+python -m venv venv
 pip install -r MLmodel/requirements.txt
 
 # Use default input location
