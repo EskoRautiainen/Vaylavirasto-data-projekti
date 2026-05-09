@@ -106,9 +106,9 @@ def _read_matching_sheet(file_path: Path) -> tuple[pd.DataFrame, str, int]:
                     resolved["nyo_kiiht"]: "nyo_kiiht",
                     resolved["yhd_kiiht"]: "yhd_kiiht",
                     resolved["pituus"]: "pituus",
-            })
+                })
 
-            return renamed_dataframe, sheet_name, header_row
+                return renamed_dataframe, sheet_name, header_row
 
     raise ValueError(
         f"No worksheet with required columns found in file: {file_path.name}. "
