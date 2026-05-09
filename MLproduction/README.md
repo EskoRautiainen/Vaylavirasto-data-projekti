@@ -2,12 +2,17 @@
 
 ## Overview
 
-This production pipeline processes road condition data from Excel, applies a pre-trained ML model, and outputs anomaly predictions with formatted Excel results.
+This repository contains a production inference pipeline for road condition anomaly detection.
 
-The pipeline is inference-only (no training). It uses a saved model and scaler to detect anomalies in acceleration data.
+The system processes raw Excel measurement files, cleans and validates acceleration data, applies a pre-trained anomaly detection model, and exports categorized results into a formatted Excel workbook.
 
+The pipeline is inference-only:
 
-## 1.0 How to run
+- No model training occurs during execution
+- A previously trained model and scaler are loaded from disk
+- Predictions and anomaly scores are generated for incoming production data
+
+## How to run?
 
 ### Creating and activating virtual environment
 
@@ -23,7 +28,12 @@ source venv/Scripts/activate
 pip install -r MLmodel/requirements.txt
 
 # Run the pipeline
-python MLmodel/ml_pipeline.py
+python -m MLproduction.production_pipeline
+```
+
+```bash
+# Run everything at once
+python -m venv venv source venv/Scripts/activate pip install -r MLmodel/requirements.txt python -m MLproduction.production_pipeline
 ```
 
 **Linux/Mac:**
@@ -38,7 +48,12 @@ source venv/bin/activate
 pip install -r MLmodel/requirements.txt
 
 # Run the pipeline
-python MLmodel/ml_pipeline.py
+python -m MLproduction.production_pipeline
+```
+
+```bash
+# Run everything at once
+python3 -m venv venv source venv/bin/activate pip install -r MLmodel/requirements.txt python -m MLproduction.production_pipeline
 ```
 
 ### Using the virtual environment
@@ -52,123 +67,212 @@ The virtual environment ensures that all dependencies are isolated and consisten
 
 Run the program from the `Vaylavirasto-data-projekti` directory:
 
-```bash
-python -m MLproduction.production_pipeline
-```
+## Pipeline Architecture
 
-The input must be an Excel file name with the extension `.xlsx` or `.xlsm`.
+The pipeline consists of seven sequential stages:
 
-The Excel file must be located in the repository root `Data` directory. Supported input formats are a plain file name or `Data/<file name>`. Full paths and other relative paths are not supported.
-
-## 2.0 Pipeline execution order
-
-The ML pipeline executes the steps in the following order:
-
-1. `step_01_load_data()` - loads and filters the data from Excel worksheets
-2. `step_02_clean_data()` - removes invalid rows (missing values, non-numeric values, negative values)
-3. `step_03_engineer_features()` - selects final ML features and renames them to English
-4. `step_04_load_artifacts()` - load previously trained model and scaler
-5. `step_05_run_production` - run predictions
-6. `step_06_build_results()` - combine results
-7. `step_07_excel_colours()` - format and save to excel
-
-Each step includes comprehensive error handling and data validation. If any step removes all data, the pipeline stops execution with a descriptive error message.
+Step --- Module --- Purpose
+1.	Data Loading	        Discover and read Excel source files
+2.	Data Cleaning	        Remove invalid ML rows
+3.	Feature Selection	    Select model input features
+4.	Artifact Loading	    Load trained scaler and model
+5.	Production Inference	Generate predictions and anomaly scores
+6.	Result Assembly         Combine metadata and predictions
+7.	Excel Export	        Save formatted production results
 
 
+## Directory Structure
+MLproduction/
+├── production_pipeline.py
+├── src/
+│   ├── data_loading.py
+│   ├── data_cleaning.py
+│   ├── feature_engineering.py
+│   ├── load_model_and_start_production.py
+│   ├── build_results.py
+│   └── build_excel_table.py
+│
+MLmodel/
+├── MLfiles/
+│   ├── anomaly_model.pkl
+│   ├── scaler.pkl
+│   └── feature_metadata.json
+|
+|── output
+│   └── production_results_coloured.xlsx
 
-## 3.1 Data Loading
-```text 
-Reads Excel file (.xlsx / .xlsm)
-Requires sheet:
-Raportti 10m MALLI
-Filters required columns
-Outputs a DataFrame with selected features
-```
 
-## 3.2 Data Cleaning
-```text 
-Removes:
-Missing values
-Non-numeric values
-Invalid rows
-Keeps only valid ML input data
-```
+## Step 1 — Data Loading
+### Purpose
+Reads Excel measurement files and extracts valid source data.
 
-## 3.3 Feature Engineering
-```text 
-Selects acceleration features:
-Pysty_kiiht
-Sivuheilahdus_kiiht
-Nyökkimis_kiiht
-Renames to model-ready format
-```
+### Responsibilities
+Discover .xlsx and .xlsm files
+Ignore temporary Excel lock files (~$)
+Dynamically locate valid worksheets
+Validate required columns
+Normalize column naming
 
-## 3.4 Load Model
+Filter rows where:
+pituus == 10
 
-```model = joblib.load('anomaly_model.pkl')```
-```scaler = joblib.load('scaler.pkl')```
-```text 
-Loads pre-trained Isolation Forest model
-Loads fitted scaler
-```
+### Required Columns
+pys_kiiht
+siv_kiiht
+nyo_kiiht
+yhd_kiiht
+pituus
+Output
 
-## 3.5 Prediction (Production)
-```scaled = scaler.transform(features)```
-```predictions = model.predict(scaled)```
-```scores = model.decision_function(scaled)```
-```text
-Applies scaling
-Outputs:
-predictions (1 = normal, -1 = anomaly)
-scores (anomaly strength)
-```
+Returns a combined pandas DataFrame containing all valid rows across all source files.
 
-## 3.6 Build Results
-```text 
-Adds:
-anomaly_prediction
-anomaly_score
-anomaly_type (Normal / Anomaly)
-anomaly_category:
-Category	    Score
-Critical	    ≤ -0.15
-Poor	        ≤ -0.08
-Fair	        ≤ -0.03
-Good	        ≤ 0.02
-Excellent	    > 0.02
-priority_score  (1 = highest priority)
-```
+## Step 2 — Data Cleaning
+### Purpose
+Ensure ML input data is numerically valid.
 
-## 3.7 Excel Output
-```text 
-Saves results to:
+### Cleaning Stages
+Phase 1 — Missing Values
+Removes rows containing NaN values.
 
-MLproduction/MLfiles/production_results_coloured.xlsx
-Adds:
-Color scales (green → red)
-Highlighted feature columns
-Ratio columns (vs combined acceleration)
-```
+Phase 2 — Non-Numeric Values
+Converts comma decimals:
+1,23 → 1.23
+Removes rows containing invalid numeric values.
 
-## 4.0 Output
-```text 
-Main File
-production_results_coloured.xlsx
+Phase 3 — Negative Values
+Removes rows containing negative acceleration values.
 
-Contains:
-Original metadata
-Engineered features
-Predictions & scores
-Categorization & priority
-```
+### Output
+A cleaned DataFrame suitable for ML inference.
 
-## 5.0 Error Handling
-```text 
-Each step is wrapped in try/except:
+## Step 3 — Feature Selection
+### Purpose
+Select model-required acceleration features.
 
-Fails fast with clear messages:
-"Data loading failed"
-"Data cleaning failed"
-"Production failed"
-Prevents silent errors in production
-```
+Selected Features
+pys_kiiht
+siv_kiiht
+nyo_kiiht
+Notes
+
+No feature transformation currently occurs.
+This stage performs feature selection only.
+
+## Step 4 — Model Loading
+### Purpose
+Load previously trained ML artifacts.
+
+**Loaded Files**
+anomaly_model.pkl
+scaler.pkl
+Notes
+
+The scaler must match:
+- feature order
+- feature count
+- training preprocessing
+
+## Step 5 — Production Inference
+### Purpose
+Generate anomaly predictions.
+
+**Processing**
+
+**Scaling**
+scaled = scaler.transform(features)
+
+**Prediction**
+predictions = model.predict(scaled)
+scores = model.decision_function(scaled)
+
+**Outputs**
+Field --- Description
+predictions         1 = normal, -1 = anomaly
+scores	            anomaly confidence score
+
+## Step 6 — Result Assembly
+### Purpose
+Combine metadata, ML outputs, and prioritization.
+
+**Generated Fields**
+Column --- Description
+anomaly_prediction	    Raw model output
+anomaly_score	        Rounded anomaly score
+anomaly_type	        Normal / Anomaly
+anomaly_category	    Priority category
+priority_score	        Numeric urgency
+
+
+**Categorization**
+Current implementation uses percentile-based ranking.
+
+Percentile	Category
+0–4%	Critical
+4–8%	Poor
+8–40%	Fair
+40–80%	Good
+80–100%	Excellent
+
+## Step 7 — Excel Export
+### Purpose
+Export production-ready results workbook.
+
+**Features**
+Conditional Formatting
+Green → Yellow → Red scales
+Applied to acceleration ratios
+Applied to anomaly indicators
+
+**Ratio Columns**
+pysty_vs_yhdistetty
+sivu_vs_yhdistetty
+nyökkimis_vs_yhdistetty
+
+**Highlighted Columns**
+Selected metadata columns receive blue highlighting for readability.
+
+**Error Handling Strategy**
+Each pipeline stage:
+
+- validates inputs
+- raises descriptive exceptions
+- stops execution immediately on failure
+
+This prevents silent corruption of production results.
+
+### Important Development Notes**
+Index Integrity
+Metadata and ML features rely on shared row indices.
+
+**Avoid:**
+reset_index(drop=True)
+unless index synchronization is explicitly handled.
+
+## Model Compatibility
+
+The scaler and model must always match:
+- feature order
+- preprocessing logic
+- feature count
+
+**Changing feature selection requires retraining artifacts.**
+
+
+### Future Improvement Recommendations
+High Priority
+Add schema validation
+Add model versioning
+Add logging framework
+Add unit tests
+Add row-level unique identifiers
+Medium Priority
+Convert prints → structured logging
+Add configuration file
+Add CLI interface
+Add performance metrics
+Long-Term
+Model registry
+Drift detection
+Batch processing reports
+Automated retraining pipeline
+Add stable row ID's to dataframes. Merging different files can cause trouble in the future.
