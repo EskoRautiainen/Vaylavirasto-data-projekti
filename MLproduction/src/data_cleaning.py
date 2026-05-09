@@ -1,11 +1,11 @@
 from __future__ import annotations
-
 import pandas as pd
 
 
 # -------------------------
 # INDEX SUMMARY FORMATTING
 # -------------------------
+# Log in console, how many rows were removed
 def _format_index_summary(indices: list[int], sample_size: int = 20) -> str:
     if not indices:
         return "none"
