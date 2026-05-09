@@ -143,6 +143,8 @@ Returns a combined pandas DataFrame containing all valid rows across all source 
 ### Console feedback
 Log in console how many rows where dropped from each loaded file.
 
+Show in console 5 rows of data.
+
 ## Step 2 — Data Cleaning
 ### Purpose
 Ensure ML input data is numerically valid.
