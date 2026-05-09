@@ -34,7 +34,6 @@ python -m MLproduction.production_pipeline
 ```
 
 ```bash
-# Run everything at once
 python -m venv venv source venv/Scripts/activate pip install -r MLmodel/requirements.txt python -m MLproduction.production_pipeline
 ```
 
@@ -54,7 +53,6 @@ python -m MLproduction.production_pipeline
 ```
 
 ```bash
-# Run everything at once
 python3 -m venv venv source venv/bin/activate pip install -r MLmodel/requirements.txt python -m MLproduction.production_pipeline
 ```
 
@@ -73,15 +71,16 @@ Run the program from the `Vaylavirasto-data-projekti` directory:
 
 The pipeline consists of seven sequential stages:
 
-Step --- Module --- Purpose
-1.	Data Loading	        Discover and read Excel source files
-2.	Data Cleaning	        Remove invalid ML rows
-3.	Feature Selection	    Select model input features
-4.	Artifact Loading	    Load trained scaler and model
-5.	Production Inference	Generate predictions and anomaly scores
-6.	Result Assembly         Combine metadata and predictions
-7.	Excel Export	        Save formatted production results
-
+```text
+Step    Module                  Purpose
+1.	    Data Loading	        Discover and read Excel source files
+2.	    Data Cleaning	        Remove invalid ML rows
+3.	    Feature Selection	    Select model input features
+4.	    Artifact Loading	    Load trained scaler and model
+5.	    Production Inference	Generate predictions and anomaly scores
+6.	    Result Assembly         Combine metadata and predictions
+7.	    Excel Export	        Save formatted production results
+```
 
 ## Directory Structure
 ```text
@@ -129,7 +128,7 @@ python -m MLproduction.production_pipeline tiet-2-3-9.xlsx
 - Normalize column naming
 
 Filter rows where:
-**pituus** is less than 10
+**pituus** is == 10
 
 ### Required Columns
 - pys_kiiht
@@ -139,6 +138,15 @@ Filter rows where:
 - pituus
 
 Returns a combined pandas DataFrame containing all valid rows across all source files.
+
+### Required Columns - Details
+```text
+Column	        Type	        Unit	    Description
+pys_kiiht	    float	        m/s²	    Vertical acceleration (or equivalent sensor unit)
+siv_kiiht	    float	        m/s²	    Lateral acceleration
+nyo_kiiht	    float	        m/s²	    Longitudinal / pitch acceleration
+yhd_kiiht	    float	        m/s²	    Combined acceleration metric
+pituus	        int / float	    meters	    Segment length filter (must equal 10)
 
 ### Console feedback
 Log in console how many rows where dropped from each loaded file.
@@ -170,8 +178,8 @@ Log in console how many rows were removed during each phase.
 
 ## Step 3 — Feature Engineering
 ### Purpose
-- Prepare features for machine learning
-- Save relevevant info to MLmodel/Mlfiles/feature.metadata.json. 
+- Prepare features for machine learning.
+- Save relevant info to MLmodel/MLfiles/feature.metadata.json.
 - feature_metadata.json may help with troubleshooting.
 
 ### Selected Features
@@ -212,9 +220,6 @@ The scaler **must match**:
 
 ## Step 5 — Production Inference
 ### Purpose
-Generate anomaly predictions.
-
-### Processing
 Applies the trained preprocessing pipeline and model inference to generate anomaly predictions and scores from engineered features
 
 ### Scaling
