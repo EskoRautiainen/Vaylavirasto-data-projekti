@@ -173,13 +173,13 @@ Log in console how many rows were removed during each phase.
 - feature_metadata.json may help with troubleshooting.
 
 ### Selected Features
-pys_kiiht
-siv_kiiht
-nyo_kiiht
+- pys_kiiht
+- siv_kiiht
+- nyo_kiiht
 
 ### Notes
-No feature transformation currently occurs.
-This stage performs feature selection only.
+- This stage performs feature selection only.
+- Features are not transformed.
 
 ### Console feedback
 Log in console 5 example rows of data
@@ -189,8 +189,8 @@ Log in console 5 example rows of data
 Load previously trained ML artifacts.
 
 ### Loaded Files
-anomaly_model.pkl
-scaler.pkl
+- anomaly_model.pkl
+- scaler.pkl
 
 ### anomaly_model.pkl
 - Model is taught on "good" road data.
@@ -208,30 +208,33 @@ The scaler **must match**:
 - training preprocessing
 
 
-
 ## Step 5 — Production Inference
 ### Purpose
 Generate anomaly predictions.
 
 ### Processing
+Applies the trained preprocessing pipeline and model inference to generate anomaly predictions and scores from engineered features
 
 ### Scaling
 scaled = scaler.transform(features)
 
 ### Prediction
-predictions = model.predict(scaled)
-scores = model.decision_function(scaled)
+- predictions = model.predict(scaled)
+- scores = model.decision_function(scaled)
 
 ### Outputs
-Field --- Description
-- predictions         1 = normal, -1 = anomaly
-- scores	            anomaly confidence score
+```text
+Field                   Description
+predictions             1 = normal, -1 = anomaly
+scores                  anomaly confidence score
+```
 
 ### Console feedback
 Log in console the amount of rows in the following variables:
 - metadata_cleaned
 - engineered
 - scored
+
 Allows user to confirm that no data was lost during pipeline steps.
 
 ## Step 6 — Result Assembly
@@ -239,13 +242,14 @@ Allows user to confirm that no data was lost during pipeline steps.
 Combine metadata, ML outputs, and prioritization.
 
 ### Generated Fields
-Column --- Description
-- anomaly_prediction	    Raw model output
-- anomaly_score	            Rounded anomaly score
-- anomaly_type	            Normal / Anomaly
-- anomaly_category	        Priority category
-- priority_score	        Numeric urgency
-
+```text
+Column                      Description
+anomaly_prediction	        Raw model output
+anomaly_score	            Rounded anomaly score
+anomaly_type	            Normal / Anomaly
+anomaly_category	        Priority category
+priority_score	            Numeric urgency
+```
 
 ### Categorization
 Current implementation uses percentile-based ranking.
@@ -263,6 +267,7 @@ Export production-ready results workbook.
 
 ### Features
 Green → Yellow → Red scales
+
 Colour-coded formatting is applied to: 
 - Ride-values
 - Ride-ratios
@@ -277,10 +282,10 @@ Blue highlighting is applied to:
 - **anomaly_score**
 
 ### Ratio Columns
-pysty_vs_yhdistetty
-sivu_vs_yhdistetty
-nyökkimis_vs_yhdistetty
-
+- pysty_vs_yhdistetty
+- sivu_vs_yhdistetty
+- nyökkimis_vs_yhdistetty
+Creates a visual aid, where user can glance, which type of ride-variable is increasing the total yhd_ride.
 
 
 ## Error Handling Strategy
@@ -292,13 +297,12 @@ Each pipeline stage:
 
 This prevents silent corruption of production results.
 
-### Important Development Notes**
-Index Integrity
+### Important Development Notes
 Metadata and ML features rely on shared row indices.
 
 ### Avoid:
-reset_index(drop=True)
-unless index synchronization is explicitly handled or stable row ID's are added.
+- reset_index(drop=True)
+- reset_index may be used if index synchronization is explicitly handled or stable row ID's are added.
 
 ## Model Compatibility
 
@@ -307,8 +311,10 @@ The scaler and model must always match:
 - preprocessing logic
 - feature count
 
-**Changing feature selection requires retraining artifacts.**
+Changing feature selection requires retraining artifacts.
 
 
 ### Future Improvement Recommendations
 Add stable row ID's to dataframes. Merging different files can cause trouble in the future.
+
+Change data loading logic so that file name parameter loads only the chosen file. Currently it loads up the parent folder.
