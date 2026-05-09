@@ -141,12 +141,12 @@ Returns a combined pandas DataFrame containing all valid rows across all source 
 
 ### Required Columns - Details
 ```text
-Column	        Type	        Unit	                                                Description
-pys_kiiht	    float	        likely raw censor units	                                Vertical acceleration (or equivalent sensor unit)
-siv_kiiht	    float	        likely raw censor units	                                Lateral acceleration
-nyo_kiiht	    float	        likely raw censor units	                                Longitudinal / pitch acceleration
-pituus	        int / float	    meters	                                                Segment length filter (must equal 10)
-yhd_kiiht	    float	        combination of kiiht values and other road features.    Combined acceleration metric
+Column	        Type	        Unit	                    Description
+pys_kiiht	    float	        sensor-dependent	        Vertical acceleration (or equivalent sensor unit)
+siv_kiiht	    float	        sensor-dependent	        Lateral acceleration
+nyo_kiiht	    float	        sensor-dependent	        Longitudinal / pitch acceleration
+yhd_kiiht	    float	        derived signal              Calculation of combined acceleration metric and other road features (incline, width of pavement etc.)
+pituus	        int / float	    meters	                    Segment length filter (must equal 10)
 ```
 
 ### Console feedback
