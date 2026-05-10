@@ -3,10 +3,6 @@
 This program is made to use open road data together with road measurment data provided by [Väylävirasto](https://vayla.fi/etusivu) to create a visual representation of the Finnish road network condition. Along side with the visual element, the program outputs a geopackage with the data stored in side it.
 Custom made machine learning is used to process the data to find anomalies within the road condition data.
 
-## Installation
-
-To be updated...
-
 ## Usage
 
 ### Required files
@@ -15,9 +11,6 @@ To be updated...
 
 Digiroad file can be downloaded from [here](https://aineistot.vayla.fi/spa/ava/Tie/Digiroad/Aineistojulkaisut/latest/) <br>
 Digiroad file needs to be extracted into [Root] -> [Data] -> [Digiroad] <br>
-<br>
-Excel file(s) need to be put into [Root] -> [????] -> [????] <br>
-<br>
 When these steps are done, the code will do the rest and automatically search for the files and output the end result into <br>
 [Root] -> [output] <br>
 
