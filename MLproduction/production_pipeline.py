@@ -1,6 +1,3 @@
-import pandas as pd
-import sys
-import os
 from pathlib import Path
 from MLproduction.src.data_loading                      import step_01_load_data
 from MLproduction.src.data_cleaning                     import step_02_clean_data
@@ -15,8 +12,8 @@ from MLproduction.src.build_excel_table                 import step_07_excel_col
 # ----------------------------------------------------------------------------------------------------
 # FILE PATH
 REPO_ROOT = Path(__file__).resolve().parent.parent
-file_path = REPO_ROOT / "Data"
-output_path = REPO_ROOT / "MLproduction" / "MLfiles" / "production_results_coloured.xlsx"
+file_path = REPO_ROOT / "SourceData"
+output_path = REPO_ROOT / "output" / "production_results_coloured.xlsx"
 
 # SELECTED FEATURES
 selected_features = [
@@ -57,7 +54,11 @@ def run_pipeline():
     7. Export formatted Excel file
     """
 
+
 # LOAD DATA
+    print()
+    print()
+    print("=== Production Pipeline Started ===")
     try:
         df = step_01_load_data(file_path)
     except Exception as e:
@@ -93,6 +94,11 @@ def run_pipeline():
     except Exception as e:
         raise RuntimeError(f"Production (prediction) failed: {e}") from e 
 
+    # Print the amount of scaled features, model preditions and scores
+    print()
+    print("------------------------------------------------------------")
+    print("Scaled features, predictions and scores.")
+    print()
     print("metadata_cleaned:", len(metadata_cleaned))
     print("engineered:", len(engineered_features))
     print("predictions:", len(predictions))
@@ -100,21 +106,32 @@ def run_pipeline():
 
 # BUILD RESULTS
     try:
+        print()
+        print("------------------------------------------------------------")
+        print("Building results.")
+        print()
         results = step_06_build_results(metadata_cleaned, engineered_features, predictions, scores) # Build and categorize results
     except Exception as e:
         raise RuntimeError(f"Building results failed: {e}") from e
 
 # CUSTOMISE EXCEL AND SAVE RESULTS
     try:
+        print()
+        print("------------------------------------------------------------")
+        print("Building Excel and saving results.")
+        print()
         step_07_excel_colours(results, output_path) # Save colour-coded results to Excel
     except Exception as e:
         raise RuntimeError(f"Excel formatting and saving failed: {e}") from e
-    print("Production complete.")
+    print(f"Colours added successfully to {output_path}!")
+    print("Don't open created Excel file during production...")
+    print()
+    print("=== Production Pipeline Finished ===")
+    print()
 
 
 # ----------------------------------------------------------------------------------------------------
 #   ENTRY POINT
 # ----------------------------------------------------------------------------------------------------
 if __name__ == "__main__":
-    import sys
     run_pipeline()

@@ -6,9 +6,6 @@ import pandas as pd
 def categorize(scores):
     s = pd.Series(scores)
     categories = []
-
-    s = pd.Series(scores)
-
     percentile = s.rank(pct=True)
 
     return pd.cut(

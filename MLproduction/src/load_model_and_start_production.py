@@ -1,5 +1,7 @@
 import joblib
 from pathlib import Path
+from shared.baseline_model import BaselineDistanceModel
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 model_path = BASE_DIR / "MLmodel" / "MLfiles" / "anomaly_model.pkl"
