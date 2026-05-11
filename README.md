@@ -1,4 +1,4 @@
-# Vaylavirasto-data-projekti (WIP)
+# Vaylavirasto-data-projekti
 
 This program is made to use open road data together with road measurment data provided by [Väylävirasto](https://vayla.fi/etusivu) to create a visual representation of the Finnish road network condition. Along side with the visual element, the program outputs a geopackage with the data stored in side it.
 Custom made machine learning is used to process the data to find anomalies within the road condition data.
