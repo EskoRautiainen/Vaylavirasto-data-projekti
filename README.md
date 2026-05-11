@@ -14,6 +14,20 @@ Digiroad file needs to be extracted into [Root] -> [Data] -> [Digiroad] <br>
 When these steps are done, the code will do the rest and automatically search for the files and output the end result into <br>
 [Root] -> [output] <br>
 
+### Launching MLmodel - training pipeline
+1. Install python 3.13+
+2. Create virtual enviorment ```python -m venv venv```
+3. Activate virtual enviorment ```venv\Scripts\activate```
+4. Install dependencies ```pip install -r MLmodel/requirements.txt```
+5. Start training ```python MLmodel/ml_pipeline.py```
+
+### Launching MLproduction - production pipeline
+1. Install python 3.13+
+2. Create virtual enviorment ```python -m venv venv```
+3. Activate virtual enviorment ```venv\Scripts\activate```
+4. Install dependencies ```pip install -r MLmodel/requirements.txt```
+5. Start training ```python -m MLproduction/ml_pipeline.py```
+
 ### Launching Geopackage Generator
 1. Install python 3.13+
 2. Create virtual enviorment ```python -m venv venv```
