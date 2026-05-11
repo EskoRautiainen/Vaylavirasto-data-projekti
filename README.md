@@ -46,25 +46,12 @@ Road condition data needs to be placed in [Root] -> [SourceData]
 ### Launching Geopackage Generator
 1. Install python 3.13+
 2. Create virtual environment ```python -m venv venv```
-3. Activate virtual environment ```venv\Scripts\activate```
+3. Activate virtual environment ```source venv/Scripts/activate```
 4. Install dependencies ```pip install -r GeopackageGenerator/requirements.txt```
 5. Launch jupyter ```jupyter notebook```
 6. Open geogenerator file
 7. Select Kernel -> venv
 8. Run all
-
-### Launching Geopackage Generator failing?
-Try this instead:
-1. Install python 3.13+
-2. Create virtual environment ```python -m venv venv```
-3. Activate virtual environment ```source venv/Scripts/activate```
-5. Install ipykernel ```pip install ipykernel```
-6. Register ipykernel to jupiter ```python -m ipykernel install --user --name venv --display-name "Python (.venv)"```
-7. Install dependencies ```pip install -r GeopackageGenerator/requirements.txt```
-8. Launch jupyter ```jupyter notebook```
-9. Open geogenerator file
-10. Select Kernel -> venv
-11. Run all
 
 ### Launching Correlation Analysis
 1. Install python 3.13+
