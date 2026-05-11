@@ -216,7 +216,7 @@ __marimo__/
 MLfiles/anomaly_results.xlsx
 
 #Ignores everything inside Data folder and output folder but keeps the folder itself
-Data/*
+SourceData/*
 !Data/
 !Data/Digiroad
 !Data/ML_Output
