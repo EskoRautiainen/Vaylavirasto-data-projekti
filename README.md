@@ -28,14 +28,14 @@ Road condition data needs to be placed in [Root] -> [SourceData]
 ### Launching MLmodel - training pipeline
 1. Install python 3.13+
 2. Create virtual environment ```python -m venv venv```
-3. Activate virtual environment ```venv\Scripts\activate```
+3. Activate virtual environment ```source venv/Scripts/activate```
 4. Install dependencies ```pip install -r MLmodel/requirements.txt```
 5. Run training pipeline ```python MLmodel/ml_pipeline.py```
 
 ### Launching MLproduction - production pipeline
 1. Install python 3.13+
 2. Create virtual environment ```python -m venv venv```
-3. Activate virtual environment ```venv\Scripts\activate```
+3. Activate virtual environment ```source venv/Scripts/activate```
 4. Install dependencies ```pip install -r MLmodel/requirements.txt```
    > MLproduction uses MLmodel dependencies
 6. Run production pipeline ```python -m MLproduction/production_pipeline.py```
@@ -53,7 +53,7 @@ Road condition data needs to be placed in [Root] -> [SourceData]
 ### Launching Correlation Analysis
 1. Install python 3.13+
 2. Create virtual environment ```python -m venv venv```
-3. Activate virtual environment ```venv\Scripts\activate```
+3. Activate virtual environment ```source venv/Scripts/activate```
 4. Install dependencies ```pip install -r MLmodel/requirements.txt```
 5. Run program ```python Correlations/correlation_analysis.py```
 
