@@ -1,6 +1,7 @@
 # Vaylavirasto-data-projekti
 
-Vaylavirasto-data-projekti is a data processing and machine learning pipeline built for analysing Finnish road condition data provided by Väylävirasto (https://vayla.fi/etusivu). The system combines Digiroad road network data with road measurement Excel datasets to detect anomalies in road conditions using a custom-built machine learning pipeline.
+Vaylavirasto-data-projekti is a data processing and machine learning pipeline built for analysing Finnish road condition data provided by Väylävirasto (https://vayla.fi/etusivu).
+The system combines Digiroad road network data with road measurement Excel datasets to detect anomalies in road conditions using a custom-built machine learning pipeline.
 
 The solution is composed of four main parts:
 MLmodel: trains a machine learning model that learns what “good road condition” looks like and outputs model artifacts (e.g. scaler and anomaly model).
