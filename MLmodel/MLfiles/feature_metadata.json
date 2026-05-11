@@ -1,0 +1,11 @@
+{
+  "pipeline_version": "0.1",
+  "features": [
+    "pys_kiiht",
+    "siv_kiiht",
+    "nyo_kiiht"
+  ],
+  "feature_count": 3,
+  "data_rows": 1042431,
+  "feature_engineering_date": "2026-05-08T07:54:55.021915"
+}
