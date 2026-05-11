@@ -23,7 +23,7 @@ Digiroad file needs to be extracted into [Root] -> [Data] -> [Digiroad] <br>
 When these steps are done, the code will do the rest and automatically search for the files and output the end result into <br>
 [Root] -> [output] <br>
 
-Road data condition data needs to be placed in [Root] -> [SourceData]
+Road condition data needs to be placed in [Root] -> [SourceData]
 
 ### Launching MLmodel - training pipeline
 1. Install python 3.13+
