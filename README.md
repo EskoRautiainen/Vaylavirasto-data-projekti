@@ -14,7 +14,15 @@ Digiroad file needs to be extracted into [Root] -> [Data] -> [Digiroad] <br>
 When these steps are done, the code will do the rest and automatically search for the files and output the end result into <br>
 [Root] -> [output] <br>
 
-
+### Launching Geopackage Generator
+1. Install python 3.13+
+2. Create virtual enviorment ```python -m venv venv```
+3. Activate virtual enviorment ```venv\Scripts\activate```
+4. Install dependencies ```pip install -r GeopackageGenerator/requirements.txt```
+5. Launch jupyter ```jupyter notebook```
+6. Open geogenerator file
+7. Select Kernel -> venv
+8. Run all
 
 ## Contributing
 
