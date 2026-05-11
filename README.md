@@ -16,9 +16,9 @@ The project was developed as part of a data and AI project course at Tampere Uni
 
 ### Required files
 Digiroad file can be downloaded from [here](https://aineistot.vayla.fi/spa/ava/Tie/Digiroad/Aineistojulkaisut/latest/) <br>
-1. Digiroad for the whole of Finland (Geopackage R)
+1. Digiroad for the whole of Finland (Geopackage R) <br>
    Digiroad file needs to be extracted into [Root] -> [Data] -> [Digiroad] <br>
-3. Excel files with road condition data
+3. Excel files with road condition data <br>
    Excel files output by MLproduction_pipeline need to be moved to [Root] -> [Data] -> [ML_Output]
 
 
