@@ -18,7 +18,9 @@ The project was developed as part of a data and AI project course at Tampere Uni
 1. Digiroad for the whole of Finland (Geopackage R)
 2. Excel files with road condition data
 
-Digiroad file can be downloaded from [here](https://aineistot.vayla.fi/spa/ava/Tie/Digiroad/Aineistojulkaisut/latest/) <br>
+Digiroad file can be downloaded from
+
+[here](https://aineistot.vayla.fi/spa/ava/Tie/Digiroad/Aineistojulkaisut/latest/) <br>
 Digiroad file needs to be extracted into [Root] -> [Data] -> [Digiroad] <br>
 When these steps are done, the code will do the rest and automatically search for the files and output the end result into <br>
 [Root] -> [output] <br>
