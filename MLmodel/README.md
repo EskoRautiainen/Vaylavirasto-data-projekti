@@ -8,6 +8,7 @@ Run from repository root (`Vaylavirasto-data-projekti`):
 
 ```bash
 python -m venv venv
+source venv/Scripts/activate
 pip install -r MLmodel/requirements.txt
 
 # Use default input location
